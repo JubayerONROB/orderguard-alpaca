@@ -1,0 +1,93 @@
+{
+  "account_id": "acct_rotation_003",
+  "as_of": "2026-08-27T14:30:00Z",
+  "account_type": "margin",
+  "equity": "18400.00",
+  "cash": "4520.00",
+  "buying_power": "9040.00",
+  "pattern_day_trader": false,
+  "daytrade_count": 3,
+  "positions": [
+    {
+      "symbol": "NVDA",
+      "qty": "12",
+      "avg_entry_price": "170.00",
+      "current_price": "170.00",
+      "market_value": "2040.00",
+      "cost_basis": "2040.00",
+      "unrealized_pl": "0.00",
+      "asset_class": "us_equity",
+      "fractionable": true,
+      "shortable": true,
+      "tradable": true,
+      "opened_at": "2026-07-28T10:00:00Z"
+    },
+    {
+      "symbol": "XOM",
+      "qty": "40",
+      "avg_entry_price": "115.00",
+      "current_price": "115.00",
+      "market_value": "4600.00",
+      "cost_basis": "4600.00",
+      "unrealized_pl": "0.00",
+      "asset_class": "us_equity",
+      "fractionable": true,
+      "shortable": true,
+      "tradable": true,
+      "opened_at": "2026-07-16T09:35:00Z"
+    },
+    {
+      "symbol": "CVX",
+      "qty": "25",
+      "avg_entry_price": "152.00",
+      "current_price": "152.00",
+      "market_value": "3800.00",
+      "cost_basis": "3800.00",
+      "unrealized_pl": "0.00",
+      "asset_class": "us_equity",
+      "fractionable": true,
+      "shortable": true,
+      "tradable": true,
+      "opened_at": "2026-08-27T09:35:00Z"
+    },
+    {
+      "symbol": "MSFT",
+      "qty": "8",
+      "avg_entry_price": "430.00",
+      "current_price": "430.00",
+      "market_value": "3440.00",
+      "cost_basis": "3440.00",
+      "unrealized_pl": "0.00",
+      "asset_class": "us_equity",
+      "fractionable": true,
+      "shortable": true,
+      "tradable": true,
+      "opened_at": "2026-06-28T10:00:00Z"
+    }
+  ],
+  "open_orders": [
+    {
+      "order_id": "ord_nvda_limit_001",
+      "symbol": "NVDA",
+      "side": "buy",
+      "qty": "12",
+      "notional": null,
+      "order_type": "limit",
+      "limit_price": "168.00",
+      "stop_price": null,
+      "status": "open",
+      "submitted_at": "2026-08-26T10:00:00Z"
+    }
+  ],
+  "recent_activity": [
+    {
+      "activity_id": "act_amd_sell_001",
+      "activity_type": "fill",
+      "symbol": "AMD",
+      "qty": "60",
+      "price": "155.00",
+      "realized_pl": "-1500.00",
+      "transaction_time": "2026-08-18T15:00:00Z"
+    }
+  ]
+}

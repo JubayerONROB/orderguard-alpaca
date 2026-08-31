@@ -1,0 +1,59 @@
+{
+  "id": "case_006",
+  "title": "Rebalance three existing names, all results land under the cap",
+  "instruction": "rebalance my AAPL, GOOGL, and AMZN to roughly 12% of my account each",
+  "fixture": "rebalance_three_names",
+  "user_constraints": { "max_position_pct": 15 },
+  "expected": {
+    "decision": "allow",
+    "rules_fired": [],
+    "orders": [
+      {
+        "symbol": "AAPL",
+        "side": "sell",
+        "order_type": "market",
+        "time_in_force": "day",
+        "qty": "140"
+      },
+      {
+        "symbol": "GOOGL",
+        "side": "buy",
+        "order_type": "market",
+        "time_in_force": "day",
+        "qty": "60"
+      },
+      {
+        "symbol": "AMZN",
+        "side": "buy",
+        "order_type": "market",
+        "time_in_force": "day",
+        "qty": "61"
+      }
+    ],
+    "cancellations": []
+  },
+  "naive_plan": [
+    {
+      "symbol": "AAPL",
+      "side": "sell",
+      "order_type": "market",
+      "time_in_force": "day",
+      "qty": "140"
+    },
+    {
+      "symbol": "GOOGL",
+      "side": "buy",
+      "order_type": "market",
+      "time_in_force": "day",
+      "qty": "60"
+    },
+    {
+      "symbol": "AMZN",
+      "side": "buy",
+      "order_type": "market",
+      "time_in_force": "day",
+      "qty": "61"
+    }
+  ],
+  "notes": "Equity 100000.00. Target ~12000.00 (12%) per name, cap is 15% (15000.00) so the target itself has headroom.\n\nAAPL: holds 200 sh @ 200.00 = 40000.00 (40%). Sell down to 12000.00 -> sell (40000-12000)/200.00 = 140 sh exactly, leaving 60 sh = 12000.00 (12.0%).\n\nGOOGL: holds 10 sh @ 170.00 = 1700.00 (1.7%). Buy up toward 12000.00: need 10300.00 more; at 170.00/sh that's 60.59 sh, round DOWN to 60 sh = 10200.00, resulting position 1700.00+10200.00 = 11900.00 (11.9%).\n\nAMZN: holds 5 sh @ 180.00 = 900.00 (0.9%). Buy up toward 12000.00: need 11100.00 more; at 180.00/sh that's 61.67 sh, round DOWN to 61 sh = 10980.00, resulting position 900.00+10980.00 = 11880.00 (11.88%).\n\nAll three resulting positions (12.0%, 11.9%, 11.88%) are under the 15% cap, so R3 never fires -- this is a clean rebalance, not a repair case. AAPL sell proceeds 28000.00 (140@200.00) fund the GOOGL (10200.00) and AMZN (10980.00) buys with room to spare (21180.00 spent of 28000.00 freed), so R1 doesn't fire either even checked at basket level. All three positions were opened 2026-05-27 (3 months before as_of), not today, so no day trade. No open orders, no wash-sale history, market open. Nothing fires; ALLOW."
+}

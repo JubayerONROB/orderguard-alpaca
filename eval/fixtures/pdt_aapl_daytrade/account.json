@@ -1,0 +1,38 @@
+{
+  "account_id": "acct_pdt_002",
+  "as_of": "2026-08-27T14:30:00Z",
+  "account_type": "margin",
+  "equity": "19000.00",
+  "cash": "7650.00",
+  "buying_power": "15300.00",
+  "pattern_day_trader": false,
+  "daytrade_count": 3,
+  "positions": [
+    {
+      "symbol": "AAPL",
+      "qty": "50",
+      "avg_entry_price": "225.00",
+      "current_price": "227.00",
+      "market_value": "11350.00",
+      "cost_basis": "11250.00",
+      "unrealized_pl": "100.00",
+      "asset_class": "us_equity",
+      "fractionable": true,
+      "shortable": true,
+      "tradable": true,
+      "opened_at": "2026-08-27T09:31:00Z"
+    }
+  ],
+  "open_orders": [],
+  "recent_activity": [
+    {
+      "activity_id": "act_aapl_buy_001",
+      "activity_type": "fill",
+      "symbol": "AAPL",
+      "qty": "50",
+      "price": "225.00",
+      "realized_pl": null,
+      "transaction_time": "2026-08-27T09:31:00Z"
+    }
+  ]
+}

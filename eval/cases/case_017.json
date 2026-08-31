@@ -1,0 +1,33 @@
+{
+  "id": "case_017",
+  "title": "Interaction: concentration only breached once the existing open order also fills",
+  "instruction": "buy 10 more shares of ORCL",
+  "fixture": "pending_order_concentration_orcl",
+  "user_constraints": { "max_position_pct": 15 },
+  "expected": {
+    "decision": "allow_with_repairs",
+    "rules_fired": ["R3_CONCENTRATION", "R4_OPEN_ORDERS"],
+    "orders": [
+      {
+        "symbol": "ORCL",
+        "side": "buy",
+        "order_type": "market",
+        "time_in_force": "day",
+        "qty": "10"
+      }
+    ],
+    "cancellations": [
+      { "order_id": "ord_orcl_limit_001", "symbol": "ORCL" }
+    ]
+  },
+  "naive_plan": [
+    {
+      "symbol": "ORCL",
+      "side": "buy",
+      "order_type": "market",
+      "time_in_force": "day",
+      "qty": "10"
+    }
+  ],
+  "notes": "Equity 30000.00, cap 15% = 4500.00. Holds 20 sh ORCL @ 150.00 = 3000.00 (10%). There is also an existing OPEN order (limit buy 30 ORCL @ 148.00, unfilled) already on the book.\n\nR4_OPEN_ORDERS fires immediately: the new 10-share buy stacks with the existing open buy order on the same symbol.\n\nR3_CONCENTRATION fires on the ORIGINAL evaluation because concentration must be checked against the WORST CASE if every pending order for the symbol also fills, not just current position + new basket orders: 20 (held) + 30 (pending open order) + 10 (new buy) = 60 sh @ 150.00 = 9000.00 = 30% of equity, breaching the 15% cap. A system that only looked at current position + new orders (20+10=30 sh = 4500.00 = exactly 15%) would miss that the pending order pushes it further -- this is the point of the case.\n\nRepair: cancelling the stale open order (which fixes R4) also removes it from the concentration calculation (which fixes R3). Re-evaluated on the repaired basket: 20 (held) + 10 (new buy, unchanged) = 30 sh @ 150.00 = 4500.00 = exactly 15.0% of equity -- at the cap, not over it, so no further resize is needed; the originally requested 10-share buy already fits once the stale order is gone. Both R3 and R4 disposition REPAIRED by the single cancellation. Buying power 54000.00 covers 1500.00 easily (no R1). Position opened 2026-03-15, not today (no R2). No wash-sale history (no R5). Market open (no R6). ORCL tradable (no R7)."
+}

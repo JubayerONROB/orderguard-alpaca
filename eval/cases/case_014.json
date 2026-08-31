@@ -1,0 +1,23 @@
+{
+  "id": "case_014",
+  "title": "Single violation: short a symbol that isn't shortable",
+  "instruction": "short 50 shares of GME",
+  "fixture": "short_ineligible_gme",
+  "user_constraints": { "max_position_pct": 15 },
+  "expected": {
+    "decision": "block",
+    "rules_fired": ["R7_ASSET_ELIGIBILITY"],
+    "orders": [],
+    "cancellations": []
+  },
+  "naive_plan": [
+    {
+      "symbol": "GME",
+      "side": "sell",
+      "order_type": "market",
+      "time_in_force": "day",
+      "qty": "50"
+    }
+  ],
+  "notes": "No existing GME position; a sell order with no covering long position is a short sale. market.assets[GME].shortable is false (hard to borrow), so R7 fires, BLOCKING. There is no repair for an eligibility failure -- you either can borrow the shares or you can't -- so the basket BLOCKs. Zero orders reach the broker."
+}

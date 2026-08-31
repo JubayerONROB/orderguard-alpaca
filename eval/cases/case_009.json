@@ -1,0 +1,23 @@
+{
+  "id": "case_009",
+  "title": "Single violation: buying power exceeded",
+  "instruction": "buy $8,000 of TSLA",
+  "fixture": "cash_low_buying_power",
+  "user_constraints": { "max_position_pct": 15 },
+  "expected": {
+    "decision": "block",
+    "rules_fired": ["R1_BUYING_POWER"],
+    "orders": [],
+    "cancellations": []
+  },
+  "naive_plan": [
+    {
+      "symbol": "TSLA",
+      "side": "buy",
+      "order_type": "market",
+      "time_in_force": "day",
+      "notional": "8000.00"
+    }
+  ],
+  "notes": "Cash account. cash and buying_power are both 5000.00; equity is 60000.00 because the account also holds VTI (110 sh @ 500.00 = 55000.00, long held, untouched by this basket) -- that position exists purely to keep the concentration cap out of this test: cap is 15% of 60000.00 = 9000.00, and the 8000.00 TSLA buy (8000/60000 = 13.3%) would fit under it even at full size, so R3 never fires and this stays a true single-rule case. Basket notional is 8000.00, exceeding buying_power by 3000.00. R1 is BLOCKING; there is no well-defined auto-resize for a buying-power shortfall (unlike a concentration cap, there's no user-specified target to round down to), so the basket BLOCKs rather than being silently resized -- the trader must resubmit with a smaller amount. Zero orders reach the broker."
+}

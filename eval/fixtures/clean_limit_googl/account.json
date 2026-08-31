@@ -1,0 +1,14 @@
+{
+  "account_id": "acct_clean_004",
+  "as_of": "2026-08-27T14:30:00Z",
+  "account_type": "margin",
+  "equity": "80000.00",
+  "cash": "80000.00",
+  "unsettled_cash": "0.00",
+  "buying_power": "80000.00",
+  "pattern_day_trader": false,
+  "daytrade_count": 0,
+  "positions": [],
+  "open_orders": [],
+  "recent_activity": []
+}

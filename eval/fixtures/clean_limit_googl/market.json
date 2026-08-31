@@ -1,0 +1,27 @@
+{
+  "as_of": "2026-08-27T14:30:00Z",
+  "quotes": [
+    {
+      "symbol": "GOOGL",
+      "last_price": "175.20",
+      "bid": "175.15",
+      "ask": "175.25",
+      "as_of": "2026-08-27T14:30:00Z"
+    }
+  ],
+  "assets": [
+    {
+      "symbol": "GOOGL",
+      "tradable": true,
+      "fractionable": true,
+      "shortable": true,
+      "asset_class": "us_equity"
+    }
+  ],
+  "clock": {
+    "timestamp": "2026-08-27T14:30:00Z",
+    "is_open": true,
+    "next_open": "2026-08-28T13:30:00Z",
+    "next_close": "2026-08-27T20:00:00Z"
+  }
+}

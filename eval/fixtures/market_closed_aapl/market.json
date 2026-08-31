@@ -1,0 +1,27 @@
+{
+  "as_of": "2026-08-27T22:00:00Z",
+  "quotes": [
+    {
+      "symbol": "AAPL",
+      "last_price": "227.00",
+      "bid": "226.90",
+      "ask": "227.10",
+      "as_of": "2026-08-27T20:00:00Z"
+    }
+  ],
+  "assets": [
+    {
+      "symbol": "AAPL",
+      "tradable": true,
+      "fractionable": true,
+      "shortable": true,
+      "asset_class": "us_equity"
+    }
+  ],
+  "clock": {
+    "timestamp": "2026-08-27T22:00:00Z",
+    "is_open": false,
+    "next_open": "2026-08-28T13:30:00Z",
+    "next_close": "2026-08-28T20:00:00Z"
+  }
+}

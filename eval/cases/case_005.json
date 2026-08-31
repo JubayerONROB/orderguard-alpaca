@@ -1,0 +1,31 @@
+{
+  "id": "case_005",
+  "title": "Trim 30% of a position held 6 months",
+  "instruction": "sell 30% of my JNJ position",
+  "fixture": "trim_jnj_established",
+  "user_constraints": { "max_position_pct": 15 },
+  "expected": {
+    "decision": "allow",
+    "rules_fired": [],
+    "orders": [
+      {
+        "symbol": "JNJ",
+        "side": "sell",
+        "order_type": "market",
+        "time_in_force": "day",
+        "qty": "30"
+      }
+    ],
+    "cancellations": []
+  },
+  "naive_plan": [
+    {
+      "symbol": "JNJ",
+      "side": "sell",
+      "order_type": "market",
+      "time_in_force": "day",
+      "qty": "30"
+    }
+  ],
+  "notes": "JNJ position: 100 sh, opened_at 2026-02-27 (6 months before as_of 2026-08-27) -- not opened today, so selling any part of it is not a day trade. 30% of 100 sh = 30 sh. A sell reduces concentration, never increases it, so R3 cannot fire. No open orders on JNJ, no realized loss history on JNJ (so no wash sale), market is open. Nothing fires; ALLOW."
+}

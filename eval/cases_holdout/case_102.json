@@ -1,0 +1,32 @@
+{
+  "id": "case_102",
+  "title": "HOLDOUT: extended-hours eligibility interacting with buying power",
+  "instruction": "buy $3,000 of AAPL after hours if you can, and also buy $5,000 of MSFT",
+  "fixture": "extended_hours_buying_power",
+  "user_constraints": { "max_position_pct": 15 },
+  "expected": {
+    "decision": "block",
+    "rules_fired": ["R6_SESSION", "R3_CONCENTRATION", "R1_BUYING_POWER"],
+    "orders": [],
+    "cancellations": []
+  },
+  "naive_plan": [
+    {
+      "symbol": "AAPL",
+      "side": "buy",
+      "order_type": "market",
+      "time_in_force": "day",
+      "notional": "3000.00",
+      "extended_hours": true
+    },
+    {
+      "symbol": "MSFT",
+      "side": "buy",
+      "order_type": "market",
+      "time_in_force": "day",
+      "notional": "5000.00",
+      "extended_hours": false
+    }
+  ],
+  "notes": "HOLDOUT CASE. Equity 25000.00 (>= the 25000.00 PDT threshold, so R2 is never in play). Holds SPY (46 sh @ 500.00 = 23000.00, long held, untouched by this basket) so equity is large enough to make the interaction below deliberate rather than accidental. cash and buying_power are both 2000.00. as_of is 2026-08-27T22:00:00Z; market.clock.is_open is false. Cap = 15% * 25000.00 = 3750.00.\n\n'After hours if you can' compiles to extended_hours=true on the AAPL order; the trader said nothing about extended hours for MSFT, so it compiles with the default extended_hours=false.\n\nConcentration is checked against the basket the compiler LITERALLY produced (both orders present), before either R6 or R1 have touched anything: AAPL 3000.00 <= 3750.00 cap -- fine on its own. MSFT 5000.00 > 3750.00 cap -- breaches on its own, independent of buying power or session. R3_CONCENTRATION fires on this original evaluation.\n\nR6_SESSION: with the market closed, the MSFT order (extended_hours=false) is invalid for the session; the AAPL order (extended_hours=true) is valid. R6 fires and repair defers just MSFT (dropping it does not empty the basket -- AAPL remains) -- disposition REPAIRED.\n\nBecause R6's repair removes MSFT entirely, R3's concentration problem (which was specifically about the MSFT leg) is also gone once re-checked against the reduced basket -- R3 is credited disposition REPAIRED too, fixed as a side effect of R6's repair (same principle as case_017 in the main suite: a rule that fired on the original plan still counts as fired even if a different rule's repair happens to resolve it).\n\nR1_BUYING_POWER: evaluated against the basket AFTER both repairs, i.e. just the AAPL order. 3000.00 exceeds the 2000.00 buying power. R1 fires, BLOCKING, no repair exists for a shortfall -- disposition BLOCKED.\n\nBecause R1 ends up BLOCKED, the OVERALL decision is BLOCK even though R6 and R3 were both independently and successfully repaired: any single BLOCKED rule blocks the whole basket, so the final plan has zero orders and zero cancellations regardless of what got fixed along the way. The point of the case: three rules interacting across two repair stages, and a later unrepairable rule still blocking everything after two earlier rules succeeded on their own terms."
+}

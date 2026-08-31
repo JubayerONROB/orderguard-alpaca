@@ -1,0 +1,29 @@
+{
+  "account_id": "acct_holdout_102",
+  "as_of": "2026-08-27T22:00:00Z",
+  "account_type": "margin",
+  "equity": "25000.00",
+  "cash": "2000.00",
+  "unsettled_cash": "0.00",
+  "buying_power": "2000.00",
+  "pattern_day_trader": false,
+  "daytrade_count": 0,
+  "positions": [
+    {
+      "symbol": "SPY",
+      "qty": "46",
+      "avg_entry_price": "480.00",
+      "current_price": "500.00",
+      "market_value": "23000.00",
+      "cost_basis": "22080.00",
+      "unrealized_pl": "920.00",
+      "asset_class": "us_equity",
+      "fractionable": true,
+      "shortable": true,
+      "tradable": true,
+      "opened_at": "2025-07-25T10:00:00Z"
+    }
+  ],
+  "open_orders": [],
+  "recent_activity": []
+}

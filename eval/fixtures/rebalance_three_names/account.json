@@ -1,0 +1,57 @@
+{
+  "account_id": "acct_rebalance_006",
+  "as_of": "2026-08-27T14:30:00Z",
+  "account_type": "margin",
+  "equity": "100000.00",
+  "cash": "57400.00",
+  "unsettled_cash": "0.00",
+  "buying_power": "100000.00",
+  "pattern_day_trader": false,
+  "daytrade_count": 0,
+  "positions": [
+    {
+      "symbol": "AAPL",
+      "qty": "200",
+      "avg_entry_price": "195.00",
+      "current_price": "200.00",
+      "market_value": "40000.00",
+      "cost_basis": "39000.00",
+      "unrealized_pl": "1000.00",
+      "asset_class": "us_equity",
+      "fractionable": true,
+      "shortable": true,
+      "tradable": true,
+      "opened_at": "2026-05-27T10:00:00Z"
+    },
+    {
+      "symbol": "GOOGL",
+      "qty": "10",
+      "avg_entry_price": "165.00",
+      "current_price": "170.00",
+      "market_value": "1700.00",
+      "cost_basis": "1650.00",
+      "unrealized_pl": "50.00",
+      "asset_class": "us_equity",
+      "fractionable": true,
+      "shortable": true,
+      "tradable": true,
+      "opened_at": "2026-05-27T10:00:00Z"
+    },
+    {
+      "symbol": "AMZN",
+      "qty": "5",
+      "avg_entry_price": "175.00",
+      "current_price": "180.00",
+      "market_value": "900.00",
+      "cost_basis": "875.00",
+      "unrealized_pl": "25.00",
+      "asset_class": "us_equity",
+      "fractionable": true,
+      "shortable": true,
+      "tradable": true,
+      "opened_at": "2026-05-27T10:00:00Z"
+    }
+  ],
+  "open_orders": [],
+  "recent_activity": []
+}

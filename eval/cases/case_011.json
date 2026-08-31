@@ -1,0 +1,33 @@
+{
+  "id": "case_011",
+  "title": "Single violation: new buy stacks on an existing unfilled buy",
+  "instruction": "buy 15 more shares of IBM",
+  "fixture": "open_order_stack_ibm",
+  "user_constraints": { "max_position_pct": 15 },
+  "expected": {
+    "decision": "allow_with_repairs",
+    "rules_fired": ["R4_OPEN_ORDERS"],
+    "orders": [
+      {
+        "symbol": "IBM",
+        "side": "buy",
+        "order_type": "market",
+        "time_in_force": "day",
+        "qty": "15"
+      }
+    ],
+    "cancellations": [
+      { "order_id": "ord_ibm_limit_001", "symbol": "IBM" }
+    ]
+  },
+  "naive_plan": [
+    {
+      "symbol": "IBM",
+      "side": "buy",
+      "order_type": "market",
+      "time_in_force": "day",
+      "qty": "15"
+    }
+  ],
+  "notes": "No existing IBM position, but an open unfilled order (limit buy 10 IBM @ 190.00, submitted 2026-08-26) is already on the book. A fresh 15-share buy in the same basket stacks with it -- R4 fires (disposition REPAIRED). Repair cancels the stale open order and lets the requested 15-share buy proceed as sized (no merge with the cancelled order's quantity). Post-trade: 15 sh @ 190.00 = 2850.00, 2850/50000 = 5.7% of equity (cap 15%), no R3. Buying power 60000.00 comfortably covers 2850.00, no R1. No day trade (no position being closed), no wash-sale history, market open. Single rule fires."
+}

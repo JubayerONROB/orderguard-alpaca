@@ -1,0 +1,11 @@
+# For Streamlit Community Cloud: this file takes priority over pyproject.toml, so
+# deployment installs with pip instead of Poetry (see pyproject.toml's requires-python
+# bound for why Poetry's solver failed). Runtime deps for ui/app.py only -- no pytest,
+# no ruff, no dev extras. Versions pinned to what was tested locally (.venv).
+-e .
+streamlit==1.62.0
+pydantic==2.13.5
+pydantic-settings==2.15.0
+httpx==0.28.1
+python-dotenv==1.2.3
+alpaca-py==0.44.0

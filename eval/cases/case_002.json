@@ -1,0 +1,23 @@
+{
+  "id": "case_002",
+  "title": "Single violation: PDT block on a same-day round trip",
+  "instruction": "sell my AAPL",
+  "fixture": "pdt_aapl_daytrade",
+  "user_constraints": { "max_position_pct": 15 },
+  "expected": {
+    "decision": "block",
+    "rules_fired": ["R2_PDT"],
+    "orders": [],
+    "cancellations": []
+  },
+  "naive_plan": [
+    {
+      "symbol": "AAPL",
+      "side": "sell",
+      "order_type": "market",
+      "time_in_force": "day",
+      "qty": "50"
+    }
+  ],
+  "notes": "Margin account, equity $19,000 (< $25,000 PDT equity threshold), pattern_day_trader=false, daytrade_count=3 already used in the rolling 5-business-day window. The 50-share AAPL position was opened_at 2026-08-27T09:31:00Z, the same calendar day as as_of (2026-08-27T14:30:00Z) -- selling it now closes a position opened today, which is by definition day trade #4. 4 day trades in 5 business days on an account under $25k equity trips Reg T's pattern-day-trader restriction, so R2_PDT is BLOCKING and no repair can fix it (the only fix is not selling today, which contradicts the instruction). Decision is BLOCK; zero orders reach the broker."
+}

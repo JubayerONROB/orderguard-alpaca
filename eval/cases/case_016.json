@@ -1,0 +1,30 @@
+{
+  "id": "case_016",
+  "title": "Interaction: two buys each affordable alone, jointly exceed buying power",
+  "instruction": "buy $6,000 of AAPL and $6,000 of MSFT",
+  "fixture": "joint_buying_power_aapl_msft",
+  "user_constraints": { "max_position_pct": 15 },
+  "expected": {
+    "decision": "block",
+    "rules_fired": ["R1_BUYING_POWER"],
+    "orders": [],
+    "cancellations": []
+  },
+  "naive_plan": [
+    {
+      "symbol": "AAPL",
+      "side": "buy",
+      "order_type": "market",
+      "time_in_force": "day",
+      "notional": "6000.00"
+    },
+    {
+      "symbol": "MSFT",
+      "side": "buy",
+      "order_type": "market",
+      "time_in_force": "day",
+      "notional": "6000.00"
+    }
+  ],
+  "notes": "Margin account, buying_power 10000.00. Equity is 50000.00 because the account also holds SPY (100 sh @ 400.00 = 40000.00, long held, untouched by this basket) -- purely to keep the concentration cap out of this test: cap is 15% of 50000.00 = 7500.00, and each 6000.00 buy (6000/50000 = 12%) fits under it individually, so R3 never fires and this stays a true R1-only interaction case. Each order alone (6000.00 AAPL, 6000.00 MSFT) is individually under buying_power (6000 < 10000), so a system that checks orders in isolation would wrongly ALLOW both. Checked at basket level, the combined notional is 6000.00 + 6000.00 = 12000.00, which exceeds buying_power by 2000.00 -- R1 must fire against the SUM across the basket, not either order alone. BLOCKING, no repair (see case_009's reasoning), zero orders reach the broker. This case exists specifically to punish per-order checking."
+}

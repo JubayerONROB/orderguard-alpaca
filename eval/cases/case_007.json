@@ -1,0 +1,31 @@
+{
+  "id": "case_007",
+  "title": "Liquidate one full position held since last year",
+  "instruction": "sell all of my KO shares",
+  "fixture": "liquidate_ko_long_held",
+  "user_constraints": { "max_position_pct": 15 },
+  "expected": {
+    "decision": "allow",
+    "rules_fired": [],
+    "orders": [
+      {
+        "symbol": "KO",
+        "side": "sell",
+        "order_type": "market",
+        "time_in_force": "day",
+        "qty": "50"
+      }
+    ],
+    "cancellations": []
+  },
+  "naive_plan": [
+    {
+      "symbol": "KO",
+      "side": "sell",
+      "order_type": "market",
+      "time_in_force": "day",
+      "qty": "50"
+    }
+  ],
+  "notes": "Cash account. KO position opened_at 2025-07-20, over a year before as_of 2026-08-27 -- not a day trade. A full liquidation only reduces concentration, so R3 cannot fire. No open orders on KO, no prior realized loss on KO (no wash sale), market open, KO tradable. Nothing fires; ALLOW."
+}

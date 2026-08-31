@@ -1,0 +1,52 @@
+{
+  "id": "case_101",
+  "title": "HOLDOUT: relative target across three positions, one opened today (PDT)",
+  "instruction": "cut my tech exposure in half",
+  "fixture": "tech_cut_pdt",
+  "user_constraints": { "max_position_pct": 15 },
+  "expected": {
+    "decision": "allow_with_repairs",
+    "rules_fired": ["R2_PDT"],
+    "orders": [
+      {
+        "symbol": "AAPL",
+        "side": "sell",
+        "order_type": "market",
+        "time_in_force": "day",
+        "qty": "10"
+      },
+      {
+        "symbol": "MSFT",
+        "side": "sell",
+        "order_type": "market",
+        "time_in_force": "day",
+        "qty": "5"
+      }
+    ],
+    "cancellations": []
+  },
+  "naive_plan": [
+    {
+      "symbol": "AAPL",
+      "side": "sell",
+      "order_type": "market",
+      "time_in_force": "day",
+      "qty": "10"
+    },
+    {
+      "symbol": "MSFT",
+      "side": "sell",
+      "order_type": "market",
+      "time_in_force": "day",
+      "qty": "5"
+    },
+    {
+      "symbol": "NVDA",
+      "side": "sell",
+      "order_type": "market",
+      "time_in_force": "day",
+      "qty": "15"
+    }
+  ],
+  "notes": "HOLDOUT CASE. Margin account, equity 20000.00 (cash 6600.00 + AAPL 4000.00 + MSFT 4300.00 + NVDA 5100.00). All three are 'tech' names, combined value 4000+4300+5100=13400.00 (67% of equity). 'Cut in half' compiles literally to selling 50% of the share count in each: AAPL 20*0.5=10, MSFT 10*0.5=5, NVDA 30*0.5=15.\n\nNVDA's opened_at is 2026-08-27T09:40:00Z -- same calendar day as as_of (2026-08-27) -- while AAPL and MSFT were both opened 2026-06-28, two months earlier. Selling any NVDA today therefore closes a same-day-opened position: a day trade. daytrade_count is already 3 (the rolling-window limit), so this would be day trade #4 on an account with equity 20000.00 < 25000.00 -- R2_PDT fires, BLOCKING.\n\nRepair: defer just the NVDA sell (the day-trade-creating order); AAPL and MSFT sells remain in the basket since they don't involve a same-day position, so deferral does not empty the basket -- disposition REPAIRED, decision ALLOW_WITH_REPAIRS. NVDA is left untouched today; the trader would need to revisit that leg on a later session.\n\nNo other rule is in play: all three orders are sells within held quantity (no R7 short), no buys so R1/R3 never evaluate a symbol, no open orders on any of these symbols (no R4), no realized-loss history (no R5), market is open (no R6)."
+}

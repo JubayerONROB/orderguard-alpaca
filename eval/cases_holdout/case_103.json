@@ -1,0 +1,59 @@
+{
+  "id": "case_103",
+  "title": "HOLDOUT: a sale funds two buys, and one of the buys breaches the cap",
+  "instruction": "sell all my TSM, buy $9,000 of GOOGL and $4,000 of AMZN",
+  "fixture": "netted_sale_cap_breach",
+  "user_constraints": { "max_position_pct": 15 },
+  "expected": {
+    "decision": "allow_with_repairs",
+    "rules_fired": ["R3_CONCENTRATION"],
+    "orders": [
+      {
+        "symbol": "TSM",
+        "side": "sell",
+        "order_type": "market",
+        "time_in_force": "day",
+        "qty": "100"
+      },
+      {
+        "symbol": "AMZN",
+        "side": "buy",
+        "order_type": "market",
+        "time_in_force": "day",
+        "notional": "4000.00"
+      },
+      {
+        "symbol": "GOOGL",
+        "side": "buy",
+        "order_type": "market",
+        "time_in_force": "day",
+        "qty": "25"
+      }
+    ],
+    "cancellations": []
+  },
+  "naive_plan": [
+    {
+      "symbol": "TSM",
+      "side": "sell",
+      "order_type": "market",
+      "time_in_force": "day",
+      "qty": "100"
+    },
+    {
+      "symbol": "GOOGL",
+      "side": "buy",
+      "order_type": "market",
+      "time_in_force": "day",
+      "notional": "9000.00"
+    },
+    {
+      "symbol": "AMZN",
+      "side": "buy",
+      "order_type": "market",
+      "time_in_force": "day",
+      "notional": "4000.00"
+    }
+  ],
+  "notes": "HOLDOUT CASE. Equity 40000.00 (cash 18300.00 + TSM 20000.00 [100 sh @ 200.00, held since 2026-01-10] + GOOGL 1700.00 [10 sh @ 170.00, held since 2026-01-10]). Cap = 15% * 40000.00 = 6000.00. buying_power 10000.00.\n\nLiteral compile: sell all 100 TSM (qty, since 'sell all'); buy GOOGL notional 9000.00; buy AMZN notional 4000.00 (both dollar-denominated per the instruction's own phrasing).\n\nR1_BUYING_POWER: basket buy total 9000.00+4000.00=13000.00; basket sell total 100*200.00=20000.00 (TSM at its quoted price). Net needed = 13000.00-20000.00 = -7000.00 (net cash-positive), well within buying_power 10000.00 -- PASSES, no rule fires here.\n\nR3_CONCENTRATION, checked per buy symbol against the 6000.00 cap:\n  GOOGL: already holds 1700.00 (10 sh); + new buy 9000.00 = 10700.00 -- exceeds 6000.00. FIRES. No pending open orders on GOOGL, no cancellations in this basket, so headroom = 6000.00 - 1700.00 = 4300.00; at 170.00/share that's floor(4300.00/170.00) = 25 shares = 4250.00 (resulting position 1700.00+4250.00=5950.00 = 14.875% of equity, under the cap; a 26th share would be 4420.00, resulting 6120.00 = 15.3%, over). Repair converts the GOOGL order from notional to qty=25 (matches the whole-share-down convention).\n  AMZN: holds nothing; new buy 4000.00 <= 6000.00 cap -- PASSES on its own, so repair leaves this order untouched (still notional 4000.00, not converted to qty, since it never needed resizing).\n\nSince only R3 fired and it repaired successfully (both symbols end up compliant), decision is ALLOW_WITH_REPAIRS. TSM's sale is unaffected: opened_at 2026-01-10, not today, so no R2 day-trade concern; qty sold (100) equals qty held (100), not a short, so no R7. No open orders on any of these three symbols (no R4). No realized-loss history (no R5). Market is open (no R6)."
+}

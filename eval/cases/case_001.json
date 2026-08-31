@@ -1,0 +1,31 @@
+{
+  "id": "case_001",
+  "title": "Clean buy, plenty of buying power",
+  "instruction": "buy $2,000 of MSFT",
+  "fixture": "simple_msft_buy",
+  "user_constraints": { "max_position_pct": 15 },
+  "expected": {
+    "decision": "allow",
+    "rules_fired": [],
+    "orders": [
+      {
+        "symbol": "MSFT",
+        "side": "buy",
+        "order_type": "market",
+        "time_in_force": "day",
+        "notional": "2000.00"
+      }
+    ],
+    "cancellations": []
+  },
+  "naive_plan": [
+    {
+      "symbol": "MSFT",
+      "side": "buy",
+      "order_type": "market",
+      "time_in_force": "day",
+      "notional": "2000.00"
+    }
+  ],
+  "notes": "Floor case. $50,000 equity/cash/buying_power account, no positions, no open orders, no day trades used. A $2,000 notional MSFT buy is 2000/50000 = 4% concentration (cap 15%), well within buying power, no PDT exposure, no open-order conflict, no wash-sale history, market is open, MSFT is tradable/fractionable. Nothing fires; ALLOW with the single compiled order unchanged."
+}

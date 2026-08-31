@@ -1,0 +1,83 @@
+{
+  "as_of": "2026-08-27T14:30:00Z",
+  "quotes": [
+    {
+      "symbol": "NVDA",
+      "last_price": "170.00",
+      "bid": "169.95",
+      "ask": "170.05",
+      "as_of": "2026-08-27T14:30:00Z"
+    },
+    {
+      "symbol": "XOM",
+      "last_price": "115.00",
+      "bid": "114.95",
+      "ask": "115.05",
+      "as_of": "2026-08-27T14:30:00Z"
+    },
+    {
+      "symbol": "CVX",
+      "last_price": "152.00",
+      "bid": "151.95",
+      "ask": "152.05",
+      "as_of": "2026-08-27T14:30:00Z"
+    },
+    {
+      "symbol": "MSFT",
+      "last_price": "430.00",
+      "bid": "429.95",
+      "ask": "430.05",
+      "as_of": "2026-08-27T14:30:00Z"
+    },
+    {
+      "symbol": "AMD",
+      "last_price": "164.00",
+      "bid": "163.95",
+      "ask": "164.05",
+      "as_of": "2026-08-27T14:30:00Z"
+    }
+  ],
+  "assets": [
+    {
+      "symbol": "NVDA",
+      "tradable": true,
+      "fractionable": true,
+      "shortable": true,
+      "asset_class": "us_equity"
+    },
+    {
+      "symbol": "XOM",
+      "tradable": true,
+      "fractionable": true,
+      "shortable": true,
+      "asset_class": "us_equity"
+    },
+    {
+      "symbol": "CVX",
+      "tradable": true,
+      "fractionable": true,
+      "shortable": true,
+      "asset_class": "us_equity"
+    },
+    {
+      "symbol": "MSFT",
+      "tradable": true,
+      "fractionable": true,
+      "shortable": true,
+      "asset_class": "us_equity"
+    },
+    {
+      "symbol": "AMD",
+      "tradable": true,
+      "fractionable": true,
+      "shortable": true,
+      "asset_class": "us_equity"
+    }
+  ],
+  "clock": {
+    "timestamp": "2026-08-27T14:30:00Z",
+    "is_open": true,
+    "next_open": "2026-08-28T13:30:00Z",
+    "next_close": "2026-08-27T20:00:00Z"
+  }
+}

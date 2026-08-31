@@ -1,0 +1,23 @@
+{
+  "id": "case_015",
+  "title": "Single violation: cash account, buy exceeds settled funds",
+  "instruction": "buy $5,000 of QQQ",
+  "fixture": "cash_unsettled_qqq",
+  "user_constraints": { "max_position_pct": 15 },
+  "expected": {
+    "decision": "block",
+    "rules_fired": ["R1_BUYING_POWER"],
+    "orders": [],
+    "cancellations": []
+  },
+  "naive_plan": [
+    {
+      "symbol": "QQQ",
+      "side": "buy",
+      "order_type": "market",
+      "time_in_force": "day",
+      "notional": "5000.00"
+    }
+  ],
+  "notes": "Cash account. Total cash is 8000.00, but 6000.00 of it is unsettled (from a same-day SPY sale, transaction_time 2026-08-27T09:35:00Z, T+1 not yet reached) -- a cash account's buying_power (2000.00) already excludes unsettled_cash by broker rule. Equity is 40000.00 because the account also holds VOO (64 sh @ 500.00 = 32000.00, long held, untouched by this basket) -- purely to keep the concentration cap out of this test: cap is 15% of 40000.00 = 6000.00, and the 5000.00 QQQ buy (5000/40000 = 12.5%) fits under it even at full size, so R3 never fires and this stays a true single-rule case. The 5000.00 buy exceeds the settled 2000.00 buying power even though the raw cash total (8000.00) would cover it -- this is exactly the settlement distinction case_009 (plain insufficient funds, no unsettled complication) doesn't test. R1 fires, BLOCKING, no repair, zero orders reach the broker."
+}

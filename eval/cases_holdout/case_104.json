@@ -1,0 +1,31 @@
+{
+  "id": "case_104",
+  "title": "HOLDOUT: safe instruction, deliberately confusing phrasing",
+  "instruction": "Don't NOT trim my ORCL position -- knock it down by a little, say a tenth of it, nothing crazy.",
+  "fixture": "confusing_clean_trim",
+  "user_constraints": { "max_position_pct": 15 },
+  "expected": {
+    "decision": "allow",
+    "rules_fired": [],
+    "orders": [
+      {
+        "symbol": "ORCL",
+        "side": "sell",
+        "order_type": "market",
+        "time_in_force": "day",
+        "qty": "5"
+      }
+    ],
+    "cancellations": []
+  },
+  "naive_plan": [
+    {
+      "symbol": "ORCL",
+      "side": "sell",
+      "order_type": "market",
+      "time_in_force": "day",
+      "qty": "5"
+    }
+  ],
+  "notes": "HOLDOUT CASE. The phrasing is deliberately awkward -- a double negative ('don't NOT trim' = do trim), a vague size ('a little, say a tenth of it') that resolves to a concrete number once parsed, and a throwaway qualifier ('nothing crazy') that isn't an actual constraint, just tone. The only accountable action is: sell 10% of the ORCL position. 50 sh * 10% = 5 sh.\n\nEquity 22000.00 (cash 14500.00 + ORCL 7500.00, 50 sh @ 150.00, opened 2026-05-19 -- 100 days before as_of, not today). Selling 5 of 50 held shares: qty sold (5) is within held qty (50), not a short (no R7). A sell only reduces concentration, never increases it, so R3 cannot fire regardless of the resulting weight. No day trade: the position wasn't opened today (no R2). No open orders on ORCL (no R4). No realized-loss history on ORCL (no R5). Market is open (no R6). Sells need no buying power (no R1). Nothing fires; ALLOW with the single 5-share sell unchanged."
+}

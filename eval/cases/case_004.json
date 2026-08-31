@@ -1,0 +1,33 @@
+{
+  "id": "case_004",
+  "title": "Clean limit buy, ample cash, market open",
+  "instruction": "buy 10 shares of GOOGL with a limit price of $175.00",
+  "fixture": "clean_limit_googl",
+  "user_constraints": { "max_position_pct": 15 },
+  "expected": {
+    "decision": "allow",
+    "rules_fired": [],
+    "orders": [
+      {
+        "symbol": "GOOGL",
+        "side": "buy",
+        "order_type": "limit",
+        "time_in_force": "day",
+        "qty": "10",
+        "limit_price": "175.00"
+      }
+    ],
+    "cancellations": []
+  },
+  "naive_plan": [
+    {
+      "symbol": "GOOGL",
+      "side": "buy",
+      "order_type": "limit",
+      "time_in_force": "day",
+      "qty": "10",
+      "limit_price": "175.00"
+    }
+  ],
+  "notes": "$80,000 equity/cash/buying_power account, no positions, no open orders. 10 sh @ 175.00 limit = 1750.00 notional exposure, 1750/80000 = 2.19% of equity (cap 15%). Buying power (80000.00) comfortably covers 1750.00. Market is open, GOOGL is tradable. Nothing fires; ALLOW with the order unchanged."
+}

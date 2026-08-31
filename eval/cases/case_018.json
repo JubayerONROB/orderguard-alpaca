@@ -1,0 +1,45 @@
+{
+  "id": "case_018",
+  "title": "Interaction: a buy funded by a same-basket sale must net against post-sale funds",
+  "instruction": "sell 10 shares of my AVGO and buy $4,000 of AAPL",
+  "fixture": "post_sale_funding_avgo_aapl",
+  "user_constraints": { "max_position_pct": 15 },
+  "expected": {
+    "decision": "allow",
+    "rules_fired": [],
+    "orders": [
+      {
+        "symbol": "AVGO",
+        "side": "sell",
+        "order_type": "market",
+        "time_in_force": "day",
+        "qty": "10"
+      },
+      {
+        "symbol": "AAPL",
+        "side": "buy",
+        "order_type": "market",
+        "time_in_force": "day",
+        "notional": "4000.00"
+      }
+    ],
+    "cancellations": []
+  },
+  "naive_plan": [
+    {
+      "symbol": "AVGO",
+      "side": "sell",
+      "order_type": "market",
+      "time_in_force": "day",
+      "qty": "10"
+    },
+    {
+      "symbol": "AAPL",
+      "side": "buy",
+      "order_type": "market",
+      "time_in_force": "day",
+      "notional": "4000.00"
+    }
+  ],
+  "notes": "Cash account, buying_power 3000.00 (== cash, no unsettled funds). AVGO: 50 sh @ 500.00 = 25000.00, opened_at 2024-08-27 (2 years before as_of, not a day trade). Equity = 3000.00 + 25000.00 = 28000.00.\n\nA system that checks the AAPL buy order in isolation against the PRE-TRADE buying_power (4000.00 > 3000.00) would wrongly BLOCK it. Correct: the basket also sells 10 AVGO in the same run, freeing 10 * 500.00 = 5000.00. Post-sale funds available for the buy = 3000.00 (pre-trade buying_power) + 5000.00 (same-basket sale proceeds) = 8000.00, which covers the 4000.00 AAPL buy with 4000.00 to spare. R1 must net sales against buys WITHIN the same basket before checking the remainder against buying power -- this case exists specifically to punish a per-order check. Expected decision is ALLOW: nothing actually fires.\n\nConcentration: AAPL 4000.00 / equity 28000.00 = 14.29% (cap 15%) -- under cap, no R3. AVGO sell only reduces AVGO's weight, cannot trigger R3. No existing open orders (no R4). No day trade: AVGO held 2 years, AAPL is a new buy not a same-day round trip (no R2). No realized-loss history on AAPL or AVGO (no R5). Market open (no R6). Both symbols tradable (no R7). Nothing fires; ALLOW."
+}

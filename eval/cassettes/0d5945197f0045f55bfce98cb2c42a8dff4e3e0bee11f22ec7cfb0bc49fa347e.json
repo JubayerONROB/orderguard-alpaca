@@ -1,0 +1,23 @@
+{
+  "key": "0d5945197f0045f55bfce98cb2c42a8dff4e3e0bee11f22ec7cfb0bc49fa347e",
+  "model": "agnes-2.5-flash",
+  "response": {
+    "cancellations": [],
+    "orders": [
+      {
+        "extended_hours": false,
+        "limit_price": null,
+        "notional": "2000",
+        "order_type": "market",
+        "qty": null,
+        "side": "buy",
+        "stop_price": null,
+        "symbol": "AAPL",
+        "time_in_force": "day"
+      }
+    ]
+  },
+  "system": "You are OrderGuard's intent compiler. You turn a trader's plain-English instruction\ninto a concrete, executable basket of orders against their real brokerage account.\n\nYou are given the trader's current account state, current market data, and their\nstated risk constraints. Ground every order in what you're given: only reference\nsymbols that appear in the account's positions or that the trader explicitly names,\nand only use prices/eligibility from the market data provided. Never invent a symbol,\na price, or a share count out of nothing.\n\nYou do not check risk rules. A separate deterministic rule engine (buying power,\npattern-day-trading, concentration caps, open-order conflicts, wash sales, market\nsession, asset eligibility) runs after you and will repair or block anything unsafe.\nYour job is to compile the instruction literally and completely -- if the trader says\n\"close out my energy names and split the proceeds evenly,\" compile exactly that, even\nif it might turn out to violate a cap. Do not pre-emptively shrink, split, or skip an\norder because you think it might be risky. That is not your job, and doing it anyway\nmakes your output harder to audit against what the trader actually asked for.\n\nIf the instruction implies closing part or all of a position, use the exact symbol and\neither its current held quantity (for \"all\"/\"close out\") or a computed partial quantity\n(for percentages like \"30%\"). If the instruction implies a dollar-denominated buy\n(\"$2,000 of MSFT\"), use notional sizing, not a guessed share count. If it implies a\nshare-denominated action (\"buy 10 shares\"), use qty sizing. Never set both qty and\nnotional on the same order.\n\nWhenever you convert a percentage or dollar target into a share quantity (e.g. \"rebalance\nto roughly 12% each,\" \"put $4,200 into NVDA\" when sizing by shares), always round DOWN to\nthe nearest whole share. Never round up, and never round to the nearest share. Rounding\ndown is correct even when the instruction says \"roughly\" or \"about\" -- the deterministic\nrule engine enforces exact caps downstream, and a share count that's too high can turn a\ncompliant plan into one it must repair or block; a share count that's one share low never\ndoes.\n\nIf the instruction requires cancelling an existing open order (e.g. it conflicts with\na new order on the same symbol), you may still just place the new order -- you are not\nresponsible for resolving that conflict; the rule engine's repair step owns\ncancellations. Do not include a `cancellations` entry unless the trader explicitly\nasked to cancel something.\n\nIf the instruction doesn't require any order at all (e.g. it's already satisfied, or\nit names no accountable action), return an empty `orders` list. An empty basket is a\nvalid, sometimes correct answer -- don't invent an order just to have something to say.\n",
+  "temperature": 0,
+  "user": "Account: margin account, equity $100000, cash $100000, buying power $398724.99\nDay trades used: 0 in the rolling 5-day window\nPositions: none\nOpen orders:\n  5cec26de-26fa-4d1c-a1d3-73d9ce982631: limit buy 5 sh AAPL @ $255, submitted 2026-08-29, status accepted\nMarket: CLOSED as of 2026-08-29 15:14:55.436185-04:00\nUser constraint: max position size 15% of equity\nInstruction: \"buy $2,000 of AAPL\""
+}

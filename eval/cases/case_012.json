@@ -1,0 +1,31 @@
+{
+  "id": "case_012",
+  "title": "Single violation: rebuy 11 days after a realized loss (wash sale, warning only)",
+  "instruction": "buy 100 shares of SOFI",
+  "fixture": "wash_sale_sofi_rebuy",
+  "user_constraints": { "max_position_pct": 15 },
+  "expected": {
+    "decision": "allow",
+    "rules_fired": ["R5_WASH_SALE"],
+    "orders": [
+      {
+        "symbol": "SOFI",
+        "side": "buy",
+        "order_type": "market",
+        "time_in_force": "day",
+        "qty": "100"
+      }
+    ],
+    "cancellations": []
+  },
+  "naive_plan": [
+    {
+      "symbol": "SOFI",
+      "side": "buy",
+      "order_type": "market",
+      "time_in_force": "day",
+      "qty": "100"
+    }
+  ],
+  "notes": "200 sh SOFI sold at a realized loss (-500.00) on 2026-08-16, 11 days before as_of 2026-08-27 -- within the 30-day wash-sale window. R5 fires, but its severity is WARNING: it doesn't block and a resize can't fix a wash sale (the problem is the purchase timing, not the size), so it fires with disposition WARNED and the basket proceeds unchanged -- decision is ALLOW (not ALLOW_WITH_REPAIRS, since nothing was repaired; not BLOCK, since WARNING never blocks). 100 sh @ 8.00 = 800.00, 800/25000 = 3.2% of equity (cap 15%), no R3. Buying power 40000.00 covers 800.00, no R1. No day trade, no open orders, market open. Single rule fires."
+}

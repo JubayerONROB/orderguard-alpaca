@@ -1,0 +1,68 @@
+{
+  "id": "case_003",
+  "title": "Four rules at once: PDT, stacked open order, concentration cap, wash sale",
+  "instruction": "Close out my energy names and put it all into NVDA and AMD, split evenly, nothing over 15% per position.",
+  "fixture": "retail_rotation",
+  "user_constraints": { "max_position_pct": 15 },
+  "expected": {
+    "decision": "allow_with_repairs",
+    "rules_fired": ["R2_PDT", "R4_OPEN_ORDERS", "R3_CONCENTRATION", "R5_WASH_SALE"],
+    "orders": [
+      {
+        "symbol": "XOM",
+        "side": "sell",
+        "order_type": "market",
+        "time_in_force": "day",
+        "qty": "40"
+      },
+      {
+        "symbol": "NVDA",
+        "side": "buy",
+        "order_type": "market",
+        "time_in_force": "day",
+        "qty": "4"
+      },
+      {
+        "symbol": "AMD",
+        "side": "buy",
+        "order_type": "market",
+        "time_in_force": "day",
+        "qty": "16"
+      }
+    ],
+    "cancellations": [
+      { "order_id": "ord_nvda_limit_001", "symbol": "NVDA" }
+    ]
+  },
+  "naive_plan": [
+    {
+      "symbol": "XOM",
+      "side": "sell",
+      "order_type": "market",
+      "time_in_force": "day",
+      "qty": "40"
+    },
+    {
+      "symbol": "CVX",
+      "side": "sell",
+      "order_type": "market",
+      "time_in_force": "day",
+      "qty": "25"
+    },
+    {
+      "symbol": "NVDA",
+      "side": "buy",
+      "order_type": "market",
+      "time_in_force": "day",
+      "notional": "4200.00"
+    },
+    {
+      "symbol": "AMD",
+      "side": "buy",
+      "order_type": "market",
+      "time_in_force": "day",
+      "notional": "4200.00"
+    }
+  ],
+  "notes": "rules_fired semantics (resolved): every rule that failed at ANY point during the run, each carrying its FINAL disposition -- not pre-repair only, not post-repair only. R2_PDT, R4_OPEN_ORDERS, and R3_CONCENTRATION all failed on the compiler's literal basket (close both energy names, split proceeds evenly into NVDA/AMD) and were fixed by repair, so each appears here with disposition REPAIRED. R5_WASH_SALE failed on the literal basket too, but a resize can't fix a wash sale -- it still fails on the final basket, so it appears with disposition WARNED (its severity is WARNING, so it doesn't block). `orders`/`cancellations` are the FINAL repaired basket the trader actually approves.\n\nEquity check: cash 4520.00 + NVDA 2040.00 (12@170) + XOM 4600.00 (40@115) + CVX 3800.00 (25@152) + MSFT 3440.00 (8@430) = 18400.00 equity. Matches.\n\nR2_PDT: literal instruction closes XOM (held 6 weeks, opened_at 2026-07-16, not a day trade) AND CVX (opened_at 2026-08-27, same day as as_of -- closing it today is day trade #4 on an account with daytrade_count=3 already and equity 18400 < 25000). R2 blocks the CVX leg; repair drops the CVX sell and defers it to the next session. XOM sell is unaffected by R2 (not opened today) and proceeds as planned.\n\nR4_OPEN_ORDERS: existing open order ord_nvda_limit_001 (limit buy 12 NVDA @ 168.00) stacks with a new NVDA buy in the same basket. Repair cancels the open order so the position math for the concentration check is unambiguous, then sizes the new NVDA buy fresh.\n\nR3_CONCENTRATION (cap 15% of equity = 0.15 * 18400 = 2760.00 per position): literal instruction intended to split the combined XOM+CVX proceeds (4600 + 3800 = 8400) evenly, i.e. 4200.00 into NVDA and 4200.00 into AMD -- both breach the 2760.00 cap. Repair caps each buy at the largest whole-share count that stays under 2760.00: NVDA already holds 2040.00 (12 sh @ 170.00), so remaining headroom is 2760.00 - 2040.00 = 720.00 -> at 170.00/share that's 4 shares (680.00, resulting position 2720.00 = 14.78%%~14.8% of equity); a 5th share would be 2890.00 = 15.71%, over cap. AMD holds nothing (fully sold 9 days ago), full 2760.00 headroom -> at 164.00/share that's 16 shares (2624.00 = 14.26%~14.3% of equity); a 17th share would be 2788.00 = 15.15%, over cap.\n\nCash after repair: XOM sale proceeds 4600.00 (CVX proceeds unavailable since its sale was deferred) minus new buys (680.00 NVDA + 2624.00 AMD = 3304.00) = net +1296.00 cash. This is the '~$1,296 stays in cash' outcome: the 15% cap doesn't let the full 4600.00 XOM proceeds be redeployed into just two positions.\n\nR5_WASH_SALE: AMD was sold at a realized loss (-1500.00 on 60 sh, 2026-08-18, 9 days before as_of). Buying AMD again now is a repurchase within 30 days of that loss -- WARNING severity, does not block and is not something a resize can fix, so it still fires against the final basket and must be surfaced to the trader for tax awareness."
+}

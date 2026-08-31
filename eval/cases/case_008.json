@@ -1,0 +1,31 @@
+{
+  "id": "case_008",
+  "title": "Notional buy of a fractionable asset, fractional shares result",
+  "instruction": "buy $500 of AMZN",
+  "fixture": "fractional_amzn_notional",
+  "user_constraints": { "max_position_pct": 15 },
+  "expected": {
+    "decision": "allow",
+    "rules_fired": [],
+    "orders": [
+      {
+        "symbol": "AMZN",
+        "side": "buy",
+        "order_type": "market",
+        "time_in_force": "day",
+        "notional": "500.00"
+      }
+    ],
+    "cancellations": []
+  },
+  "naive_plan": [
+    {
+      "symbol": "AMZN",
+      "side": "buy",
+      "order_type": "market",
+      "time_in_force": "day",
+      "notional": "500.00"
+    }
+  ],
+  "notes": "Cash account, 30000.00 cash/buying_power, no positions. 500.00/180.00 = 2.78 fractional shares of AMZN, which is fine because AMZN is fractionable=true and the order is sized by notional (no whole-share rounding needed, unlike case_003/case_006). 500/30000 = 1.67% of equity (cap 15%). Buying power comfortably covers 500.00. Market open, AMZN tradable and fractionable. Nothing fires; ALLOW."
+}

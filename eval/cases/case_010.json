@@ -1,0 +1,31 @@
+{
+  "id": "case_010",
+  "title": "Single violation: one buy pushes a name past the concentration cap",
+  "instruction": "buy $10,000 of NFLX",
+  "fixture": "concentration_single_nflx",
+  "user_constraints": { "max_position_pct": 15 },
+  "expected": {
+    "decision": "allow_with_repairs",
+    "rules_fired": ["R3_CONCENTRATION"],
+    "orders": [
+      {
+        "symbol": "NFLX",
+        "side": "buy",
+        "order_type": "market",
+        "time_in_force": "day",
+        "qty": "10"
+      }
+    ],
+    "cancellations": []
+  },
+  "naive_plan": [
+    {
+      "symbol": "NFLX",
+      "side": "buy",
+      "order_type": "market",
+      "time_in_force": "day",
+      "notional": "10000.00"
+    }
+  ],
+  "notes": "Equity 40000.00, cap 15% = 6000.00. No existing NFLX position, so the literal 10000.00 buy alone would make NFLX 10000/40000 = 25% of equity, breaching the cap -- R3 fires (disposition REPAIRED). R3's repair policy is uniform regardless of the original order's sizing mode: always resize DOWN to the largest whole-share qty that keeps the resulting position at or under the cap (matches case_003's precedent -- see CLAUDE.md's repair principle). NFLX @ 600.00/share, headroom 6000.00 -> floor(6000.00/600.00) = 10 shares = 6000.00 exactly (15.0% of equity, at but not over the cap; this headroom happens to divide evenly, unlike case_003's NVDA/AMD). No existing position, no open orders, no wash-sale history, market open, buying power (40000.00) covers even the original 10000.00 request so R1 never enters into it. Single rule fires."
+}

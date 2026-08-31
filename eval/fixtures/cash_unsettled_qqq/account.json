@@ -1,0 +1,39 @@
+{
+  "account_id": "acct_unsettled_015",
+  "as_of": "2026-08-27T14:30:00Z",
+  "account_type": "cash",
+  "equity": "40000.00",
+  "cash": "8000.00",
+  "unsettled_cash": "6000.00",
+  "buying_power": "2000.00",
+  "pattern_day_trader": false,
+  "daytrade_count": 0,
+  "positions": [
+    {
+      "symbol": "VOO",
+      "qty": "64",
+      "avg_entry_price": "480.00",
+      "current_price": "500.00",
+      "market_value": "32000.00",
+      "cost_basis": "30720.00",
+      "unrealized_pl": "1280.00",
+      "asset_class": "us_equity",
+      "fractionable": true,
+      "shortable": true,
+      "tradable": true,
+      "opened_at": "2025-02-10T10:00:00Z"
+    }
+  ],
+  "open_orders": [],
+  "recent_activity": [
+    {
+      "activity_id": "act_prior_sale_001",
+      "activity_type": "fill",
+      "symbol": "SPY",
+      "qty": "10",
+      "price": "600.00",
+      "realized_pl": "300.00",
+      "transaction_time": "2026-08-27T09:35:00Z"
+    }
+  ]
+}

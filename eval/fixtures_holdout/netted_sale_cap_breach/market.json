@@ -1,0 +1,55 @@
+{
+  "as_of": "2026-08-27T14:30:00Z",
+  "quotes": [
+    {
+      "symbol": "TSM",
+      "last_price": "200.00",
+      "bid": "199.90",
+      "ask": "200.10",
+      "as_of": "2026-08-27T14:30:00Z"
+    },
+    {
+      "symbol": "GOOGL",
+      "last_price": "170.00",
+      "bid": "169.95",
+      "ask": "170.05",
+      "as_of": "2026-08-27T14:30:00Z"
+    },
+    {
+      "symbol": "AMZN",
+      "last_price": "180.00",
+      "bid": "179.95",
+      "ask": "180.05",
+      "as_of": "2026-08-27T14:30:00Z"
+    }
+  ],
+  "assets": [
+    {
+      "symbol": "TSM",
+      "tradable": true,
+      "fractionable": true,
+      "shortable": true,
+      "asset_class": "us_equity"
+    },
+    {
+      "symbol": "GOOGL",
+      "tradable": true,
+      "fractionable": true,
+      "shortable": true,
+      "asset_class": "us_equity"
+    },
+    {
+      "symbol": "AMZN",
+      "tradable": true,
+      "fractionable": true,
+      "shortable": true,
+      "asset_class": "us_equity"
+    }
+  ],
+  "clock": {
+    "timestamp": "2026-08-27T14:30:00Z",
+    "is_open": true,
+    "next_open": "2026-08-28T13:30:00Z",
+    "next_close": "2026-08-27T20:00:00Z"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "account_id": "acct_postsale_018",
+  "as_of": "2026-08-27T14:30:00Z",
+  "account_type": "cash",
+  "equity": "28000.00",
+  "cash": "3000.00",
+  "unsettled_cash": "0.00",
+  "buying_power": "3000.00",
+  "pattern_day_trader": false,
+  "daytrade_count": 0,
+  "positions": [
+    {
+      "symbol": "AVGO",
+      "qty": "50",
+      "avg_entry_price": "450.00",
+      "current_price": "500.00",
+      "market_value": "25000.00",
+      "cost_basis": "22500.00",
+      "unrealized_pl": "2500.00",
+      "asset_class": "us_equity",
+      "fractionable": true,
+      "shortable": true,
+      "tradable": true,
+      "opened_at": "2024-08-27T10:00:00Z"
+    }
+  ],
+  "open_orders": [],
+  "recent_activity": []
+}
