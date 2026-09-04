@@ -16,6 +16,7 @@ from alpaca.trading.enums import OrderSide as AlpacaOrderSide
 from alpaca.trading.enums import QueryOrderStatus
 
 from orderguard.broker.alpaca_client import AlpacaClient, PaperTradingGuardError
+from orderguard.schemas.order_plan import Order, OrderSide, OrderType, TimeInForce
 
 NOW = datetime(2026, 8, 27, 14, 30, tzinfo=timezone.utc)
 
@@ -221,3 +222,74 @@ def test_cash_account_type_from_multiplier_one() -> None:
         account = client.get_account_state()
 
     assert account.account_type == "cash"
+
+
+# submit_order -----------------------------------------------------------------------
+
+
+def _order(**overrides) -> Order:
+    defaults = {
+        "symbol": "AAPL",
+        "side": OrderSide.BUY,
+        "order_type": OrderType.MARKET,
+        "time_in_force": TimeInForce.GTC,
+        "notional": Decimal(500),
+    }
+    defaults.update(overrides)
+    return Order(**defaults)
+
+
+def test_submit_order_forces_extended_hours_false_for_a_market_order() -> None:
+    """Regression test for the real Tier 3 failure this guards against: Alpaca rejects
+    a market order flagged extended_hours=True outright ("extended hours order must be
+    DAY or GTC limit orders"). R6 only checks is_open vs. extended_hours, not this
+    order_type/extended_hours combination, so an inconsistent plan must be forced safe
+    here rather than sent to the network to fail there."""
+    with patch("orderguard.broker.alpaca_client.TradingClient") as mock_cls:
+        mock_client = _patched_trading_client()
+        mock_client.submit_order.return_value = SimpleNamespace(id="order-1")
+        mock_cls.return_value = mock_client
+        client = AlpacaClient(_settings())
+        client.submit_order(_order(order_type=OrderType.MARKET, extended_hours=True))
+
+    request = mock_client.submit_order.call_args.kwargs["order_data"]
+    assert request.extended_hours is False
+
+
+def test_submit_order_preserves_extended_hours_true_for_a_limit_order() -> None:
+    """A limit order genuinely can run extended-hours -- the guard must not blanket-
+    disable the flag, only for the market-order combination Alpaca actually rejects."""
+    with patch("orderguard.broker.alpaca_client.TradingClient") as mock_cls:
+        mock_client = _patched_trading_client()
+        mock_client.submit_order.return_value = SimpleNamespace(id="order-1")
+        mock_cls.return_value = mock_client
+        client = AlpacaClient(_settings())
+        client.submit_order(
+            _order(order_type=OrderType.LIMIT, limit_price=Decimal("150.00"), extended_hours=True, notional=None, qty=Decimal(2))
+        )
+
+    request = mock_client.submit_order.call_args.kwargs["order_data"]
+    assert request.extended_hours is True
+
+
+def test_submit_order_leaves_extended_hours_false_alone() -> None:
+    with patch("orderguard.broker.alpaca_client.TradingClient") as mock_cls:
+        mock_client = _patched_trading_client()
+        mock_client.submit_order.return_value = SimpleNamespace(id="order-1")
+        mock_cls.return_value = mock_client
+        client = AlpacaClient(_settings())
+        client.submit_order(_order(order_type=OrderType.MARKET, extended_hours=False))
+
+    request = mock_client.submit_order.call_args.kwargs["order_data"]
+    assert request.extended_hours is False
+
+
+def test_submit_order_returns_the_broker_order_id() -> None:
+    with patch("orderguard.broker.alpaca_client.TradingClient") as mock_cls:
+        mock_client = _patched_trading_client()
+        mock_client.submit_order.return_value = SimpleNamespace(id="order-1")
+        mock_cls.return_value = mock_client
+        client = AlpacaClient(_settings())
+        order_id = client.submit_order(_order())
+
+    assert order_id == "order-1"

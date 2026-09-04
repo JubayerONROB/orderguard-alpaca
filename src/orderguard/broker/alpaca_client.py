@@ -165,11 +165,18 @@ class AlpacaClient:
     def submit_order(self, order: Order) -> str:
         side = AlpacaOrderSide.BUY if order.side == "buy" else AlpacaOrderSide.SELL
         tif = AlpacaTimeInForce(order.time_in_force.value)
+        # Alpaca rejects a market order flagged extended_hours=True outright ("extended
+        # hours order must be DAY or GTC limit orders") -- only a limit order can
+        # actually run in the extended session. R6 (session.py) only checks is_open vs.
+        # extended_hours, not this order_type/extended_hours combination, so a plan
+        # that reaches here with an inconsistent pairing is forced to the safe default
+        # (no extended-hours execution) rather than sent to the network to fail there.
+        extended_hours = order.extended_hours and order.order_type == OrderType.LIMIT
         common = {
             "symbol": order.symbol,
             "side": side,
             "time_in_force": tif,
-            "extended_hours": order.extended_hours,
+            "extended_hours": extended_hours,
         }
         if order.qty is not None:
             common["qty"] = float(order.qty)

@@ -71,6 +71,17 @@ def main() -> None:
         print(msg)
         lines.append(msg)
 
+    try:
+        _run(out)
+    finally:
+        # Written even on a mid-run crash -- a partial record of what got as far as it
+        # did is more useful as a downloadable artifact than nothing at all.
+        REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
+        REPORT_PATH.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        print(f"\nFull report written to {REPORT_PATH}")
+
+
+def _run(out) -> None:
     settings = get_settings()
     trajectory = TrajectoryLogger(TRAJECTORY_PATH)
 
@@ -203,10 +214,6 @@ def main() -> None:
                 DEFAULT_LOG_PATH,
             )
         out(f"  logged to {DEFAULT_LOG_PATH}")
-
-    REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    REPORT_PATH.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    out(f"\nFull report written to {REPORT_PATH}")
 
 
 if __name__ == "__main__":
