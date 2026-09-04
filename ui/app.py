@@ -8,9 +8,12 @@ product, not a detail.
 
 from __future__ import annotations
 
+import random
 import sys
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
+from types import SimpleNamespace
 
 # `eval/` is a plain directory at the repo root, not part of the installed `orderguard`
 # package -- Streamlit Cloud (and some local invocations) don't reliably put the repo
@@ -21,6 +24,7 @@ if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
 import streamlit as st
+from alpaca.data.historical import StockHistoricalDataClient
 
 from eval.cases import CASES_DIR, load_case
 from eval.fixtures import FIXTURES_DIR, Fixture, load_fixture
@@ -30,6 +34,34 @@ from orderguard.broker.alpaca_client import AlpacaClient
 from orderguard.compiler.intent_compiler import IntentCompiler
 from orderguard.config import get_settings
 from orderguard.llm.cassette import CassetteMode
+from orderguard.research.adversary import stress_test
+from orderguard.research.backtest_engine import InsufficientHistoryError, run_backtest
+from orderguard.research.lifecycle import classify
+from orderguard.research.market_intelligence import (
+    DEFAULT_WATCHLIST,
+    InsufficientBarsError,
+    compute_regime,
+    fetch_daily_bars,
+)
+from orderguard.research.performance_monitor import (
+    DEFAULT_LOG_PATH,
+    StrategyFill,
+    attribute_performance,
+    load_fills,
+    log_fill,
+)
+from orderguard.research.portfolio_guard import check_portfolio_guard
+from orderguard.research.schemas import (
+    BacktestReport,
+    MarketRegime,
+    RobustnessReport,
+    StrategyHypothesis,
+    StrategyState,
+)
+from orderguard.research.strategy_discovery import (
+    StrategyDiscovery,
+    StrategyDiscoveryError,
+)
 from orderguard.rules._util import is_buy, is_sell, order_notional_value
 from orderguard.rules.engine import RuleEngine
 from orderguard.schemas.account_state import AccountState
@@ -123,6 +155,109 @@ def _augment_market_with_live_assets(market: MarketSnapshot, symbols: set[str]) 
         return market
     client = AlpacaClient(get_settings())
     return market.model_copy(update={"assets": market.assets + _fetch_asset_meta(client, missing)})
+
+
+def _get_data_client() -> StockHistoricalDataClient:
+    settings = get_settings()
+    return StockHistoricalDataClient(api_key=settings.alpaca_api_key, secret_key=settings.alpaca_secret_key)
+
+
+def _synthetic_bars(symbol: str, bar_count: int = 260) -> list[SimpleNamespace]:
+    """Deterministic (seeded on the symbol) pseudo-random walk -- lets fixture mode
+    demo the research pipeline stage-by-stage with no live market data connection and
+    no live API calls. Clearly not real history; the UI labels it as such."""
+    rng = random.Random(symbol)
+    price = Decimal(100)
+    now = datetime.now(timezone.utc)
+    bars = []
+    for i in range(bar_count):
+        drift = Decimal(str(rng.uniform(-0.015, 0.018)))
+        price = max(Decimal(1), price * (1 + drift))
+        high = price * (1 + Decimal(str(rng.uniform(0, 0.01))))
+        low = price * (1 - Decimal(str(rng.uniform(0, 0.01))))
+        bars.append(
+            SimpleNamespace(
+                open=price,
+                high=high,
+                low=low,
+                close=price,
+                volume=int(rng.uniform(500_000, 2_000_000)),
+                timestamp=now - timedelta(days=bar_count - i),
+            )
+        )
+    return bars
+
+
+def _get_regimes(fixture_mode: bool, symbols: list[str]) -> tuple[MarketRegime, ...]:
+    regimes = []
+    for symbol in symbols:
+        bars = _synthetic_bars(symbol) if fixture_mode else fetch_daily_bars(_get_data_client(), symbol)
+        try:
+            regimes.append(compute_regime(symbol, bars))
+        except InsufficientBarsError:
+            continue
+    return tuple(regimes)
+
+
+def _get_backtest_bars(fixture_mode: bool, symbol: str) -> list[SimpleNamespace]:
+    if fixture_mode:
+        return _synthetic_bars(symbol)
+    return fetch_daily_bars(_get_data_client(), symbol)
+
+
+def _render_regimes(regimes: tuple[MarketRegime, ...]) -> None:
+    st.caption("Market regimes")
+    rows = [
+        {
+            "Symbol": r.symbol,
+            "Trend": r.trend,
+            "Volatility": r.volatility_regime,
+            "Volume": r.volume_state,
+            "Price": f"${r.current_price}",
+            "20d SMA": f"${r.sma_20}",
+            "Realized vol (ann.)": f"{r.realized_vol_20d * 100:.1f}%",
+        }
+        for r in regimes
+    ]
+    st.table(rows)
+
+
+def _render_hypothesis(hypothesis: StrategyHypothesis) -> None:
+    st.caption(f'Hypothesis: "{hypothesis.name}"')
+    st.write(hypothesis.rationale)
+    st.write(f"Universe: {', '.join(hypothesis.universe)}")
+    st.write(f"Entry: {hypothesis.entry.model_dump_json(exclude_none=True)}")
+    st.write(f"Exit: {hypothesis.exit.model_dump_json(exclude_none=True)}")
+
+
+def _render_backtest_report(report: BacktestReport) -> None:
+    st.caption("Backtest report (chronological 70/30 train / out-of-sample split)")
+    rows = [
+        {
+            "Window": label,
+            "Return": f"{m.total_return_pct:.1f}%",
+            "Sharpe": f"{m.sharpe:.2f}",
+            "Win rate": f"{m.win_rate_pct:.1f}%",
+            "Max drawdown": f"{m.max_drawdown_pct:.1f}%",
+            "Profit factor": (f"{m.profit_factor:.2f}" if m.profit_factor is not None else "n/a"),
+            "Trades": m.trade_count,
+        }
+        for label, m in (("Train", report.train_metrics), ("Out-of-sample", report.oos_metrics))
+    ]
+    st.table(rows)
+
+
+def _render_robustness_report(report: RobustnessReport, state: StrategyState) -> None:
+    st.caption("Adversarial robustness (perturbed-parameter grid)")
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Sensitivity score", f"{report.parameter_sensitivity_score:.0f}/100")
+    c2.metric("OOS stability score", f"{report.oos_stability_score:.0f}/100")
+    c3.metric("Overall score", f"{report.overall_score:.0f}/100")
+    c4.metric("Lifecycle state", state.value.upper())
+    if report.verdict == "PASS":
+        st.success(f"Adversary verdict: {report.verdict} ({report.grid_points_tested} grid points tested)")
+    else:
+        st.error(f"Adversary verdict: {report.verdict} ({report.grid_points_tested} grid points tested)")
 
 
 def _fixture_names() -> list[str]:
@@ -336,10 +471,99 @@ def main() -> None:
 
     constraints = UserConstraints(max_position_pct=Decimal(max_position_pct))
 
+    st.session_state.setdefault("session_starting_equity", account.equity)
+
     _render_account_panel(account)
 
     st.divider()
-    instruction = st.text_input("Instruction", value=_default_instruction())
+    st.subheader("Research a strategy")
+    st.caption(
+        "AI proposes a hypothesis, grounded in real regime data; a deterministic backtest and "
+        "adversary validate it before you ever see an instruction to approve."
+    )
+    if fixture_mode:
+        st.caption(
+            "Fixture mode uses a deterministic synthetic price series (not real market data) so "
+            "the pipeline can be demoed with no live connection or API calls."
+        )
+    research_symbols = st.multiselect("Watchlist", list(DEFAULT_WATCHLIST), default=list(DEFAULT_WATCHLIST), key="research_symbols")
+    research_prompt = st.text_input(
+        "Research prompt",
+        value="Find a short-term strategy suited to the current regime.",
+        key="research_prompt",
+    )
+
+    if st.button("Run research pipeline"):
+        st.session_state.research_ran = False
+        if not research_symbols:
+            st.error("Pick at least one symbol for the watchlist.")
+        else:
+            with st.spinner("Computing regimes, proposing a hypothesis, backtesting, and stress-testing..."):
+                try:
+                    regimes = _get_regimes(fixture_mode, research_symbols)
+                    if not regimes:
+                        st.error("No symbol in the watchlist had enough history to compute a regime.")
+                    else:
+                        llm_mode = CassetteMode.REPLAY if fixture_mode else CassetteMode.AUTO
+                        llm_client = build_llm_client(llm_mode)
+                        trajectory = TrajectoryLogger(TRAJECTORY_PATH)
+                        discovery = StrategyDiscovery(llm_client, trajectory=trajectory)
+                        hypothesis = discovery.discover(research_prompt, regimes)
+                        symbol = hypothesis.universe[0]
+                        bars = _get_backtest_bars(fixture_mode, symbol)
+                        backtest_report = run_backtest(hypothesis, symbol, bars)
+                        robustness_report = stress_test(hypothesis, symbol, bars)
+                        state = classify(robustness_report)
+
+                        st.session_state.research_ran = True
+                        st.session_state.research_regimes = regimes
+                        st.session_state.research_hypothesis = hypothesis
+                        st.session_state.research_backtest = backtest_report
+                        st.session_state.research_robustness = robustness_report
+                        st.session_state.research_state = state
+                except StrategyDiscoveryError as e:
+                    st.error(f"Strategy discovery failed: {e}")
+                except InsufficientHistoryError as e:
+                    st.error(f"Not enough historical bars to backtest: {e}")
+                except Exception as e:  # noqa: BLE001 -- research pipeline failures shouldn't crash the page
+                    st.error(f"Research pipeline failed: {e}")
+
+    if st.session_state.get("research_ran"):
+        _render_regimes(st.session_state.research_regimes)
+        hypothesis: StrategyHypothesis = st.session_state.research_hypothesis
+        backtest_report: BacktestReport = st.session_state.research_backtest
+        robustness_report: RobustnessReport = st.session_state.research_robustness
+        state: StrategyState = st.session_state.research_state
+
+        _render_hypothesis(hypothesis)
+        _render_backtest_report(backtest_report)
+        _render_robustness_report(robustness_report, state)
+
+        guard_verdict = check_portfolio_guard(
+            strategy_state=state,
+            session_starting_equity=st.session_state.session_starting_equity,
+            current_equity=account.equity,
+        )
+        if not guard_verdict.allowed:
+            st.warning("Portfolio guard would block using this idea: " + "; ".join(guard_verdict.reasons))
+
+        if st.button("Use this idea", disabled=not guard_verdict.allowed):
+            suggested_notional = (account.equity * Decimal(5) / 100).quantize(Decimal(1))
+            generated_instruction = (
+                f'Buy approximately ${suggested_notional} of {hypothesis.universe[0]} based on the '
+                f'"{hypothesis.name}" strategy ({hypothesis.entry.kind} entry, {hypothesis.exit.kind} exit).'
+            )
+            st.session_state.instruction_text = generated_instruction
+            st.session_state.active_strategy = {
+                "name": hypothesis.name,
+                "oos_sharpe": backtest_report.oos_metrics.sharpe,
+                "oos_return_pct": backtest_report.oos_metrics.total_return_pct,
+            }
+            st.rerun()
+
+    st.divider()
+    st.session_state.setdefault("instruction_text", _default_instruction())
+    instruction = st.text_input("Instruction", key="instruction_text")
 
     if st.button("Review this", type="primary"):
         llm_mode = CassetteMode.REPLAY if fixture_mode else CassetteMode.AUTO
@@ -390,19 +614,40 @@ def main() -> None:
                     trajectory = TrajectoryLogger(TRAJECTORY_PATH)
                     trajectory.log_event("human_approval", {"plan": final_plan.model_dump(mode="json")})
                     if st.session_state.fixture_mode:
+                        submitted_ids = {o.symbol: "SIMULATED" for o in final_plan.orders}
                         st.session_state.submission_results = [
                             "SIMULATED -- fixture mode, no broker connected. No real order was placed."
                         ]
                     else:
                         client = AlpacaClient(get_settings())
                         results = []
+                        submitted_ids = {}
                         for order_id in final_plan.cancellations:
                             client.cancel_order(order_id)
                             results.append(f"Cancelled {order_id}")
                         for order in final_plan.orders:
                             submitted_id = client.submit_order(order)
+                            submitted_ids[order.symbol] = submitted_id
                             results.append(f"Submitted {order.side.value} {order.symbol} -> order {submitted_id}")
                         st.session_state.submission_results = results
+
+                    active_strategy = st.session_state.get("active_strategy")
+                    if active_strategy is not None:
+                        for order in final_plan.orders:
+                            log_fill(
+                                StrategyFill(
+                                    strategy_name=active_strategy["name"],
+                                    symbol=order.symbol,
+                                    side=order.side.value,
+                                    size_text=_order_size_text(order),
+                                    order_id=str(submitted_ids.get(order.symbol, "SIMULATED")),
+                                    backtest_oos_sharpe=active_strategy["oos_sharpe"],
+                                    backtest_oos_return_pct=active_strategy["oos_return_pct"],
+                                    logged_at=datetime.now(timezone.utc),
+                                )
+                            )
+                        st.session_state.active_strategy = None
+
                     st.session_state.submitted = True
             with col2:
                 if st.button("Discard"):
@@ -428,6 +673,25 @@ def main() -> None:
         if st.button("Start over", key="start_over_discard"):
             st.session_state.reviewed = False
             st.session_state.discarded = False
+
+    st.divider()
+    with st.expander("Performance (this session's research-driven trades)"):
+        fills = load_fills(DEFAULT_LOG_PATH)
+        if not fills:
+            st.write("No research-driven trades logged yet this session.")
+        else:
+            attributions = attribute_performance(fills, account)
+            rows = [
+                {
+                    "Strategy": a.strategy_name,
+                    "Symbols": ", ".join(a.symbols),
+                    "Fills": a.fill_count,
+                    "Live unrealized P&L": f"${a.live_unrealized_pnl:,.2f}",
+                    "Status": a.status,
+                }
+                for a in attributions
+            ]
+            st.table(rows)
 
 
 if __name__ == "__main__":

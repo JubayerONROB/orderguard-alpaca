@@ -48,6 +48,69 @@ any repair runs — so if one rule's repair happens to fix a second rule as a si
 that second rule still shows up as having fired. Detection is never allowed to depend on
 which repair happened to run first.
 
+## The research pipeline (new)
+
+Everything above starts from a trader who already knows what they want to type. The
+research pipeline is an additional, optional path *into the same instruction box* — it
+proposes an idea, backtests it, and tries to break it, but every instruction it produces
+still goes through the unchanged compiler → R1-R7 → human approval flow above. Nothing
+here lets AI skip that gate.
+
+```mermaid
+flowchart LR
+    A["Alpaca market data"] --> B["Market intelligence<br/>(deterministic regime read)"]
+    B --> C["Strategy discovery (LLM)<br/>proposes a hypothesis"]
+    C --> D["Backtest engine<br/>chronological 70/30 train/OOS"]
+    D --> E["Adversary<br/>perturbed-parameter stress test"]
+    E --> F["Lifecycle<br/>ALIVE / WATCH / KILLED"]
+    F --> G["Portfolio guard<br/>KILLED + drawdown circuit breaker"]
+    G --> H["Generated instruction"]
+    H --> I["...same compiler -> R1-R7 -> human approval -> Alpaca flow as above"]
+```
+
+- **Market intelligence** (`research/market_intelligence.py`) is pure, deterministic
+  indicator math (20-day SMA trend, realized volatility, volume state) over real daily
+  bars — zero LLM calls, zero opinions.
+- **Strategy discovery** (`research/strategy_discovery.py`) is the second of two places
+  in the whole codebase allowed to call an LLM. It proposes one hypothesis, grounded in
+  the regime data, expressed in a deliberately constrained entry/exit vocabulary (3 entry
+  kinds, 3 exit kinds) so the backtest engine can actually simulate whatever it proposes.
+  It never claims the strategy works.
+- **Backtest engine** (`research/backtest_engine.py`) is pure Python: a single
+  chronological 70/30 train/out-of-sample split (not full walk-forward — a stated scope
+  cut), simulated bar-by-bar, scored into `PerformanceMetrics` for each window.
+- **Adversary** (`research/adversary.py`) re-runs the backtest across a fixed 3x3 grid of
+  perturbed entry/exit parameters and scores how much the strategy degrades — the "try to
+  break it, not just believe it" stage.
+- **Lifecycle** (`research/lifecycle.py`) classifies the adversary's score into
+  `ALIVE` (>=75), `WATCH` (50-74), or `KILLED` (<50) via fixed thresholds.
+- **Portfolio manager** (`research/portfolio_manager.py`) turns a set of ALIVE/WATCH
+  strategies into an `AllocationPlan` — a weighted, cash-buffered capital split. It is
+  what a real deployment would use to decide *how much*; the demo UI uses one hypothesis
+  at a time via "Use this idea" instead of running the full allocator.
+- **Portfolio guard** (`research/portfolio_guard.py`) is a **second, separate**
+  deterministic gate — deliberately *not* folded into R1-R7. It runs before an
+  instruction reaches the compiler at all, and blocks outright (no repair) if the
+  strategy backing the instruction is `KILLED`, or if session equity has drawn down more
+  than 5% from where the session started. R1-R7's signature and two-phase repair logic
+  are load-bearing for 22 eval cases and 63+ tests; neither a killed strategy nor a
+  portfolio drawdown is something a basket *repair* can fix, so this is a second gate,
+  not a change to the first one.
+- **Performance monitor** (`research/performance_monitor.py`) logs every research-driven
+  approved trade to a session-scoped JSONL file and attributes live unrealized P&L back
+  to the strategy that proposed it, visible in the UI's "Performance" expander. With only
+  one session's worth of fills, it honestly reports "insufficient live history yet" for a
+  strategy with fewer than 3 logged fills rather than fabricating a trend from n=1.
+
+In the UI, the **"Research a strategy"** section sits above the existing instruction box.
+"Run research pipeline" walks all of the above stages and renders each report as it
+completes. "Use this idea" runs the portfolio guard and, on pass, populates the
+instruction box with a generated plain-English instruction — from there, the review →
+approve flow is the exact same one described above. Fixture mode uses a deterministic
+synthetic price series (seeded per symbol, not real market data) so the whole pipeline can
+be demoed with no live connection; Alpaca Paper mode fetches real historical bars via
+`StockHistoricalDataClient` instead.
+
 ## The repair principle
 
 Repair only when the correction is uniquely determined by a constraint the user themselves
@@ -142,9 +205,20 @@ python -m pytest -q
 The eval suite (18 main cases + 4 held-out cases, `python -m eval.run_eval --system agent
 --llm-mode replay` for either `--suite main` or `--suite holdout`) and its scored results
 carry over unchanged from the original build — they exercise the compiler and rule engine,
-neither of which changed for this event. `tests/test_alpaca_client.py` is new: it covers
-account/position/open-order conversion and the paper-trading guard against a fully mocked
-`alpaca-py` `TradingClient`, so it needs no network access and no real credentials.
+neither of which changed for this event: 100%/100%/0% (primary score / catch rate / false
+block rate) on both suites, byte-identical to before the research pipeline was added.
+`tests/test_alpaca_client.py` is new: it covers account/position/open-order conversion and
+the paper-trading guard against a fully mocked `alpaca-py` `TradingClient`, so it needs no
+network access and no real credentials.
+
+The research pipeline has its own test file per module (`tests/test_market_intelligence.py`,
+`test_strategy_discovery.py`, `test_backtest_engine.py`, `test_adversary.py`,
+`test_lifecycle.py`, `test_portfolio_manager.py`, `test_portfolio_guard.py`,
+`test_performance_monitor.py`) — all against synthetic/hand-built inputs, no network, no
+real credentials. `strategy_discovery.py` reuses the same cassette mechanism as the intent
+compiler, so its tests run against `MockLLMClient` and its one committed cassette (for the
+UI's default research prompt/watchlist) lets the "Research a strategy" section work in
+fixture/demo mode with no live API call.
 
 ## Provenance
 
@@ -155,14 +229,21 @@ seven-rule deterministic engine, the two-phase detect-then-repair evaluation log
 approval UI's core flow, and the eval/held-out harness are **prior work**, carried over
 unmodified except where noted below.
 
-**What's new for this event** (the Alpaca paper-trading integration layer):
+**What's new for this event** (the Alpaca paper-trading integration layer, plus a full
+research pipeline built on top of it):
 - `AlpacaClient`'s construction-time paper-trading guard (`ALPACA_PAPER` + endpoint +
   environment, all required to agree, or it refuses to construct)
 - `tests/test_alpaca_client.py` — the Alpaca adapter had no unit tests before this
 - UI relabeling to make the paper-vs-demo distinction visible on screen: the mode toggle,
   the connection status line, and the "APPROVE PAPER TRADE" button
+- `src/orderguard/research/` — market intelligence, strategy discovery, backtest engine,
+  adversary, lifecycle, portfolio manager, portfolio guard, and performance monitor (see
+  "The research pipeline" above), each with its own test file
+- The "Research a strategy" section of `ui/app.py`, and the "Performance" expander
 
 **What's carried over unmodified:** `src/orderguard/rules/`, `src/orderguard/compiler/`,
 `src/orderguard/llm/`, `src/orderguard/schemas/`, the eval harness, and the rest of
-`ui/app.py`'s approval flow. See `.claude/PROVENANCE.md` for the further-upstream
-provenance of the `.claude/` framework files, which predate both hackathons.
+`ui/app.py`'s approval flow — the research pipeline is additive: it only ever produces a
+plain-English instruction or a pre-flight block, which this unchanged code then processes
+exactly as it did before. See `.claude/PROVENANCE.md` for the further-upstream provenance
+of the `.claude/` framework files, which predate both hackathons.

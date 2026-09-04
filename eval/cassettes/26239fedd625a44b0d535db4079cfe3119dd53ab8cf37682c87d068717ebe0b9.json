@@ -1,0 +1,30 @@
+{
+  "key": "26239fedd625a44b0d535db4079cfe3119dd53ab8cf37682c87d068717ebe0b9",
+  "model": "agnes-2.5-flash",
+  "response": {
+    "entry": {
+      "fast_ma_days": null,
+      "kind": "momentum_threshold",
+      "lookback_days": 5,
+      "slow_ma_days": null,
+      "threshold_pct": "2.0",
+      "volume_multiple": null
+    },
+    "exit": {
+      "atr_lookback_days": null,
+      "atr_multiple": null,
+      "hold_days": null,
+      "kind": "trailing_stop_pct",
+      "trailing_pct": "4.0"
+    },
+    "name": "Low-Vol Bullish Momentum",
+    "rationale": "Multiple tickers (SPY, QQQ, AAPL, AMD, AMZN) are in BULLISH regimes with LOW volatility (12.6\u201317.0%), creating stable trend-following conditions ideal for short-term momentum captures. AMD and AAPL are particularly attractive: both are BULLISH with LOW volatility, and AAPL has ABOVE_AVERAGE volume confirming buying interest while AMD's price sits 4.3% above its 20-day SMA indicating strong upward momentum.",
+    "universe": [
+      "AMD",
+      "AAPL"
+    ]
+  },
+  "system": "You are OrderGuard's strategy discovery stage. Given the trader's research prompt and a\nset of real, currently-computed market regime readings, you propose ONE concrete trading\nstrategy hypothesis.\n\nYou propose a hypothesis. You do not claim it works. A separate, deterministic backtest\nengine will evaluate your hypothesis against real historical price data, and an adversary\nstage will try to break it by perturbing its parameters -- your job is only to produce a\nplausible, well-reasoned idea grounded in the regime data you were given, not to assert\nthat it will be profitable.\n\nGround every part of your hypothesis in the regime data provided. Do not propose a\nstrategy for a symbol that isn't in the data you were given. Do not invent volatility,\ntrend, or volume characteristics beyond what's stated.\n\nYour hypothesis must be expressible using EXACTLY one of these three entry conditions,\nand EXACTLY one of these three exit conditions -- these are the only shapes the backtest\nengine can simulate, so do not describe anything outside this vocabulary:\n\nEntry conditions (pick exactly one):\n- \"breakout\": price makes a new `lookback_days`-day high AND volume is at least\n  `volume_multiple` times the `lookback_days`-day average volume.\n- \"ma_crossover\": the `fast_ma_days`-day moving average crosses above the\n  `slow_ma_days`-day moving average (fast_ma_days must be less than slow_ma_days).\n- \"momentum_threshold\": the trailing `lookback_days`-day return exceeds `threshold_pct`\n  percent.\n\nExit conditions (pick exactly one):\n- \"atr_stop\": exit when price falls `atr_multiple` times the Average True Range\n  (computed over `atr_lookback_days` days) below the entry price.\n- \"trailing_stop_pct\": exit when price falls `trailing_pct` percent below its peak since\n  entry.\n- \"fixed_hold_days\": exit exactly `hold_days` calendar days after entry, regardless of price.\n\nGive your hypothesis a short, descriptive name and a rationale (2-4 sentences) that\nexplicitly references the regime data that motivated it -- e.g. \"NVDA is in a\nHIGH-volatility BULLISH regime with ABOVE_AVERAGE volume, which favors a breakout entry\nover a slower moving-average crossover.\" A rationale that could apply to any market\nregardless of the data given is not acceptable.\n",
+  "temperature": 0,
+  "user": "Market regimes (all computed from real historical data, not opinion):\n  SPY: BULLISH, LOW volatility (16.1% annualized), BELOW_AVERAGE volume (price $169.3515873633589128134012394, 20d SMA $163.6851116365618236090177196)\n  QQQ: BULLISH, LOW volatility (15.3% annualized), BELOW_AVERAGE volume (price $177.8397125470247466508069860, 20d SMA $172.4109513782658142829701876)\n  AAPL: BULLISH, LOW volatility (17.0% annualized), ABOVE_AVERAGE volume (price $173.5841868533367010469499334, 20d SMA $171.7602569045579121339704898)\n  MSFT: BEARISH, LOW volatility (12.6% annualized), AVERAGE volume (price $132.2192757359522941288004227, 20d SMA $133.924878004725265134811585)\n  NVDA: NEUTRAL, LOW volatility (15.4% annualized), ABOVE_AVERAGE volume (price $96.00637667826048666586240572, 20d SMA $96.0271644869260870595358185)\n  AMD: BULLISH, LOW volatility (13.6% annualized), BELOW_AVERAGE volume (price $130.8158041212245929084210513, 20d SMA $125.4742514145369370200913994)\n  AMZN: BULLISH, LOW volatility (15.0% annualized), BELOW_AVERAGE volume (price $181.9953370707273726117374391, 20d SMA $177.2516703314866012663456292)\n\nTrader's research prompt: \"Find a short-term strategy suited to the current regime.\""
+}
