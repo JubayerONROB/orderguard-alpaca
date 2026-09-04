@@ -1,0 +1,72 @@
+name: Docker Build & Boot Verify
+
+# Manual verification only: builds the image and boot-tests it in both fixture-only and
+# real-credential modes on a GitHub-hosted runner, which has a Docker daemon (the local
+# dev sandbox this was authored in does not). Never pushes to any registry -- that's
+# docker-publish.yml's job, gated behind a version tag push, not this workflow.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t orderguard-alpaca:verify .
+
+      - name: Boot test -- no credentials (expect fixture-only mode, no crash)
+        run: |
+          docker run -d --name og-no-creds -p 8501:8501 orderguard-alpaca:verify
+          ok=""
+          for i in $(seq 1 20); do
+            if curl -sf http://localhost:8501/_stcore/health > /dev/null; then ok=1; break; fi
+            sleep 3
+          done
+          echo "--- container logs ---"
+          docker logs og-no-creds
+          docker rm -f og-no-creds
+          if [ -z "$ok" ]; then
+            echo "::error::health check never succeeded with no credentials set"
+            exit 1
+          fi
+          echo "OK: booted with no credentials, /_stcore/health responded within the timeout."
+
+      - name: Boot test -- with real credentials (expect no crash, Settings loads)
+        env:
+          AGNES_BASE_URL: https://apihub.agnes-ai.com/v1
+          AGNES_API_KEY: ${{ secrets.AGNES_API_KEY }}
+          AGNES_MODEL_FLASH: agnes-2.5-flash
+          AGNES_MODEL_PRO: agnes-2.5-pro
+          AGNES_MODEL_TURBO: agnes-2.5-turbo
+          AGNES_DEFAULT_MODEL: agnes-2.5-flash
+          AGNES_TIMEOUT: "30"
+          AGNES_MAX_RETRIES: "3"
+          ALPACA_ENVIRONMENT: paper
+          ALPACA_ENDPOINT: https://paper-api.alpaca.markets/v2
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          ALPACA_PAPER: "true"
+        run: |
+          docker run -d --name og-with-creds -p 8502:8501 \
+            -e AGNES_BASE_URL -e AGNES_API_KEY -e AGNES_MODEL_FLASH -e AGNES_MODEL_PRO \
+            -e AGNES_MODEL_TURBO -e AGNES_DEFAULT_MODEL -e AGNES_TIMEOUT -e AGNES_MAX_RETRIES \
+            -e ALPACA_ENVIRONMENT -e ALPACA_ENDPOINT -e ALPACA_API_KEY -e ALPACA_SECRET_KEY -e ALPACA_PAPER \
+            orderguard-alpaca:verify
+          ok=""
+          for i in $(seq 1 20); do
+            if curl -sf http://localhost:8502/_stcore/health > /dev/null; then ok=1; break; fi
+            sleep 3
+          done
+          echo "--- container logs (credential VALUES are never printed by this app -- see orderguard.config) ---"
+          docker logs og-with-creds
+          docker rm -f og-with-creds
+          if [ -z "$ok" ]; then
+            echo "::error::health check never succeeded with real credentials set -- Settings() may have failed to construct"
+            exit 1
+          fi
+          echo "OK: booted with real credentials, /_stcore/health responded within the timeout -- Settings() constructed without raising."
