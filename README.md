@@ -284,6 +284,32 @@ A fourth workflow, **Publish Docker image** (`.github/workflows/docker-publish.y
 builds and pushes the image to GHCR on a `v*` tag push -- no application secrets, just
 the built-in `GITHUB_TOKEN`.
 
+## Proof it works: two real Tier 3 runs
+
+Not a scripted demo -- two actual `paper-demo.yml` runs against the real paper account
+and real Agnes LLM, same day, same pipeline. The UI's "Proof" section (top of the page)
+shows both; the full evidence (console log, uploaded report, trajectory JSONL) is
+captured under [`docs/tier3-evidence/`](docs/tier3-evidence/).
+
+**Successful run** ([full log](https://github.com/JubayerONROB/orderguard-alpaca/actions/runs/33855220353)):
+research pipeline proposed *"MSFT Bullish Momentum Pullback"* (OOS return 16.3%, Sharpe
+1.74, adversary PASS at 60/100, lifecycle WATCH). The market was closed at run time, so
+the generated instruction asked for an extended-hours limit order at a real quote
+instead of an unplaceable market order. R1-R7: **ALLOW**. Submitted 9 shares of MSFT at
+a $512.70 limit -> order `ae7ab3ce-6700-44d6-a5f1-e05e1792f355` -> confirmed **filled**
+at $508.2684 avg against the live account afterward.
+
+**Blocked run** ([full log](https://github.com/JubayerONROB/orderguard-alpaca/actions/runs/33852216976)):
+same pipeline proposed *"MSFT Bullish Momentum Capture"* (OOS return 24.5%, Sharpe 2.32,
+adversary PASS at 71/100, lifecycle WATCH) and compiled to a plain market order with no
+extended-hours request. R1-R7: **BLOCK** --
+`R6_SESSION: market is closed ... and the MSFT order is not extended-hours eligible`.
+Nothing was submitted. No order exists from this run.
+
+Two backtests that both passed the adversary, both reaching the deterministic layer --
+one executes, one doesn't, and the difference is exactly the session rule doing its job,
+not the model's confidence in the strategy.
+
 ## Provenance
 
 This repository is a repackaging of
