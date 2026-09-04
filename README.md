@@ -2,6 +2,12 @@
 
 [![Tests](https://github.com/JubayerONROB/orderguard-alpaca/actions/workflows/test.yml/badge.svg)](https://github.com/JubayerONROB/orderguard-alpaca/actions/workflows/test.yml)
 
+**Live demo:** [orderguard-alpaca-9wj355nkcyijmnhupd7psy.streamlit.app](https://orderguard-alpaca-9wj355nkcyijmnhupd7psy.streamlit.app/)
+— fixture-only (no broker credentials attached), so you can click all the way through
+Review → Approve without anything ever reaching a real account. See "Proof it works"
+below for two runs where this same pipeline placed (and correctly blocked) a real paper
+order.
+
 ## What this is
 
 OrderGuard is a pre-trade intent compiler and deterministic risk gate for self-directed
