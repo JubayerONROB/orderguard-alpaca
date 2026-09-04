@@ -1,0 +1,31 @@
+=== Step 1: real Alpaca paper account ===
+account_id=ab961bec-da23-40c7-aa85-7e97c8a6f0d5 equity=$100019.79 cash=$99365.79
+
+=== Step 2: research pipeline (live) ===
+  regime: SPY NEUTRAL LOWvol ABOVE_AVERAGEvolume
+  regime: QQQ NEUTRAL LOWvol AVERAGEvolume
+  regime: AAPL BULLISH LOWvol AVERAGEvolume
+  regime: MSFT BULLISH NORMALvol ABOVE_AVERAGEvolume
+  regime: NVDA BULLISH HIGHvol AVERAGEvolume
+  regime: AMD BEARISH HIGHvol BELOW_AVERAGEvolume
+  regime: AMZN BEARISH NORMALvol BELOW_AVERAGEvolume
+  hypothesis: "MSFT Bullish Momentum Capture" -- MSFT is in a BULLISH regime with ABOVE_AVERAGE volume (price $510.15 vs 20d SMA $495.23), indicating sustained buying interest and upward momentum. NORMAL volatility (21.5% annualized) allows for meaningful price movement while keeping drawdowns manageable. This regime favors a momentum entry to capture continuation, with an ATR-based stop to protect against mean reversion typical of non-trending regimes.
+  backtest OOS: return=24.5% sharpe=2.32 trades=2
+  adversary verdict: PASS (overall score 71/100)
+  lifecycle state: WATCH
+
+=== Step 3: compile the resulting instruction (live) ===
+  instruction: Buy approximately $5001 of MSFT based on the "MSFT Bullish Momentum Capture" strategy (momentum_threshold entry, atr_stop exit).
+
+=== Step 4: deterministic rule engine (R1-R7) ===
+
+=== Step 5: full RiskReport ===
+
+Final basket:
+
+==============================================================================
+APPROVAL IS BEING SCRIPTED FOR THIS CI DEMONSTRATION.
+THIS IS NOT A SUBSTITUTE FOR THE UI'S HUMAN-IN-THE-LOOP APPROVAL STEP.
+==============================================================================
+
+=== Step 7: decision is BLOCK -- nothing submitted to Alpaca. ===

@@ -1,0 +1,121 @@
+2026-09-04T08:49:12.3234614Z ^[[36;1mpython scripts/paper_demo.py^[[0m
+2026-09-04T08:49:12.3263194Z env:
+2026-09-04T08:49:12.3263465Z   AGNES_API_KEY: ***
+2026-09-04T08:49:12.3263621Z   ALPACA_API_KEY: ***
+2026-09-04T08:49:12.3263808Z   ALPACA_SECRET_KEY: ***
+2026-09-04T08:49:12.3263985Z   AGNES_BASE_URL: https://apihub.agnes-ai.com/v1
+2026-09-04T08:49:12.3264193Z   AGNES_MODEL_FLASH: agnes-2.5-flash
+2026-09-04T08:49:12.3264352Z   AGNES_MODEL_PRO: agnes-2.5-pro
+2026-09-04T08:49:12.3264500Z   AGNES_MODEL_TURBO: agnes-2.5-turbo
+2026-09-04T08:49:12.3264797Z   AGNES_DEFAULT_MODEL: agnes-2.5-flash
+2026-09-04T08:49:12.3264944Z   AGNES_TIMEOUT: 30
+2026-09-04T08:49:12.3265067Z   AGNES_MAX_RETRIES: 3
+2026-09-04T08:49:12.3265198Z   ALPACA_ENVIRONMENT: paper
+2026-09-04T08:49:12.3265375Z   ALPACA_ENDPOINT: https://paper-api.alpaca.markets/v2
+2026-09-04T08:49:12.3265560Z   ALPACA_PAPER: true
+2026-09-04T08:49:12.3265721Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-04T08:49:12.3265987Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib/pkgconfig
+2026-09-04T08:49:12.3266227Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-04T08:49:12.3266445Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-04T08:49:12.3266662Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-04T08:49:12.3266882Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib
+2026-09-04T08:49:19.6305260Z === Step 1: real Alpaca paper account ===
+2026-09-04T08:49:19.6305783Z account_id=ab961bec-da23-40c7-aa85-7e97c8a6f0d5 equity=$100020.45 cash=$99365.79
+2026-09-04T08:49:19.6306056Z 
+2026-09-04T08:49:19.6306160Z === Step 2: research pipeline (live) ===
+2026-09-04T08:49:19.6306431Z   regime: SPY NEUTRAL LOWvol ABOVE_AVERAGEvolume
+2026-09-04T08:49:19.6306710Z   regime: QQQ NEUTRAL LOWvol AVERAGEvolume
+2026-09-04T08:49:19.6306959Z   regime: AAPL BULLISH LOWvol AVERAGEvolume
+2026-09-04T08:49:19.6307384Z   regime: MSFT BULLISH NORMALvol ABOVE_AVERAGEvolume
+2026-09-04T08:49:19.6307663Z   regime: NVDA BULLISH HIGHvol AVERAGEvolume
+2026-09-04T08:49:19.6307934Z   regime: AMD BEARISH HIGHvol BELOW_AVERAGEvolume
+2026-09-04T08:49:19.6308217Z   regime: AMZN BEARISH NORMALvol BELOW_AVERAGEvolume
+2026-09-04T08:49:19.6309581Z   hypothesis: "MSFT Bullish Momentum Pullback" -- MSFT is in a BULLISH regime with NORMAL volatility and ABOVE_AVERAGE volume, suggesting sustained buying pressure without extreme swings. A momentum entry capturing the bullish continuation fits this regime better than a breakout (no high-volume surge) or MA crossover (slower). A fixed hold period suits the low-to-normal volatility environment where large drawdowns are less likely.
+2026-09-04T08:49:19.6310965Z   backtest OOS: return=16.3% sharpe=1.74 trades=6
+2026-09-04T08:49:19.6311249Z   adversary verdict: PASS (overall score 60/100)
+2026-09-04T08:49:19.6311502Z   lifecycle state: WATCH
+2026-09-04T08:49:19.6311628Z 
+2026-09-04T08:49:19.6311754Z === Step 3: compile the resulting instruction (live) ===
+2026-09-04T08:49:19.6312217Z   market closed (next open 2026-09-04 09:30:00-04:00) -- using a real quote: MSFT last=$510.15
+2026-09-04T08:49:19.6312992Z   instruction: Buy 9 shares of MSFT as a limit order at $512.70 per share, extended-hours eligible, based on the "MSFT Bullish Momentum Pullback" strategy (momentum_threshold entry, fixed_hold_days exit).
+2026-09-04T08:49:19.6313556Z 
+2026-09-04T08:49:19.6313661Z === Step 4: deterministic rule engine (R1-R7) ===
+2026-09-04T08:49:19.6313838Z 
+2026-09-04T08:49:19.6313921Z === Step 5: full RiskReport ===
+2026-09-04T08:49:19.6314058Z 
+2026-09-04T08:49:19.6314134Z Decision: ALLOW
+2026-09-04T08:49:19.6314378Z Rule findings: none -- every rule passed on the original basket.
+2026-09-04T08:49:19.6314591Z 
+2026-09-04T08:49:19.6314661Z Final basket:
+2026-09-04T08:49:19.6314822Z   buy MSFT 9 sh
+2026-09-04T08:49:19.6314920Z 
+2026-09-04T08:49:19.6315028Z ==============================================================================
+2026-09-04T08:49:19.6315573Z APPROVAL IS BEING SCRIPTED FOR THIS CI DEMONSTRATION.
+2026-09-04T08:49:19.6315914Z THIS IS NOT A SUBSTITUTE FOR THE UI'S HUMAN-IN-THE-LOOP APPROVAL STEP.
+2026-09-04T08:49:19.6316278Z ==============================================================================
+2026-09-04T08:49:19.6316459Z 
+2026-09-04T08:49:19.6316557Z === Step 7: submitting to Alpaca paper ===
+2026-09-04T08:49:19.6316855Z   submitted buy MSFT -> order ae7ab3ce-6700-44d6-a5f1-e05e1792f355
+2026-09-04T08:49:19.6317070Z 
+2026-09-04T08:49:19.6317342Z === Step 8: logging fill(s) to performance monitor ===
+2026-09-04T08:49:19.6317881Z   logged to /home/runner/work/orderguard-alpaca/orderguard-alpaca/eval/runs/strategy_log.jsonl
+2026-09-04T08:49:19.6318188Z 
+2026-09-04T08:49:19.6318451Z Full report written to /home/runner/work/orderguard-alpaca/orderguard-alpaca/eval/runs/paper_demo_report.txt
+﻿2026-09-04T08:49:19.7686723Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-04T08:49:19.7687768Z with:
+2026-09-04T08:49:19.7687895Z   name: paper-demo-run-33855220353
+2026-09-04T08:49:19.7688117Z   path: eval/runs/trajectories/paper_demo.jsonl
+eval/runs/paper_demo_report.txt
+
+2026-09-04T08:49:19.7688348Z   if-no-files-found: warn
+2026-09-04T08:49:19.7688494Z   retention-days: 90
+2026-09-04T08:49:19.7688616Z   compression-level: 6
+2026-09-04T08:49:19.7688736Z   overwrite: false
+2026-09-04T08:49:19.7688859Z   include-hidden-files: false
+2026-09-04T08:49:19.7688994Z env:
+2026-09-04T08:49:19.7689269Z   AGNES_API_KEY: ***
+2026-09-04T08:49:19.7689412Z   ALPACA_API_KEY: ***
+2026-09-04T08:49:19.7689614Z   ALPACA_SECRET_KEY: ***
+2026-09-04T08:49:19.7689762Z   AGNES_BASE_URL: https://apihub.agnes-ai.com/v1
+2026-09-04T08:49:19.7689938Z   AGNES_MODEL_FLASH: agnes-2.5-flash
+2026-09-04T08:49:19.7690087Z   AGNES_MODEL_PRO: agnes-2.5-pro
+2026-09-04T08:49:19.7690230Z   AGNES_MODEL_TURBO: agnes-2.5-turbo
+2026-09-04T08:49:19.7690378Z   AGNES_DEFAULT_MODEL: agnes-2.5-flash
+2026-09-04T08:49:19.7690522Z   AGNES_TIMEOUT: 30
+2026-09-04T08:49:19.7690638Z   AGNES_MAX_RETRIES: 3
+2026-09-04T08:49:19.7690763Z   ALPACA_ENVIRONMENT: paper
+2026-09-04T08:49:19.7690932Z   ALPACA_ENDPOINT: https://paper-api.alpaca.markets/v2
+2026-09-04T08:49:19.7691108Z   ALPACA_PAPER: true
+2026-09-04T08:49:19.7691269Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-04T08:49:19.7691502Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib/pkgconfig
+2026-09-04T08:49:19.7691729Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-04T08:49:19.7691941Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-04T08:49:19.7692146Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-04T08:49:19.7692354Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib
+2026-09-04T08:49:19.8766329Z (node:2132) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-09-04T08:49:19.8766764Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-09-04T08:49:19.8858803Z Multiple search paths detected. Calculating the least common ancestor of all paths
+2026-09-04T08:49:19.8859768Z The least common ancestor is /home/runner/work/orderguard-alpaca/orderguard-alpaca/eval/runs. This will be the root directory of the artifact
+2026-09-04T08:49:19.8860365Z With the provided path, there will be 2 files uploaded
+2026-09-04T08:49:19.8860710Z Artifact name is valid!
+2026-09-04T08:49:19.8860848Z Root directory input is valid!
+2026-09-04T08:49:20.2885587Z Beginning upload of artifact content to blob storage
+2026-09-04T08:49:20.3001348Z (node:2132) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-09-04T08:49:20.6083239Z Uploaded bytes 4939
+2026-09-04T08:49:20.6851958Z Finished uploading artifact content to blob storage!
+2026-09-04T08:49:20.6852530Z SHA256 digest of uploaded artifact zip is 9c2d4f3dffc05df9f76429aec4ad18e4607f6936cc925950ab0dee84ca637980
+2026-09-04T08:49:20.6853187Z Finalizing artifact upload
+2026-09-04T08:49:20.9160424Z Artifact paper-demo-run-33855220353.zip successfully finalized. Artifact ID 9929911340
+2026-09-04T08:49:20.9161645Z Artifact paper-demo-run-33855220353 has been successfully uploaded! Final size is 4939 bytes. Artifact ID is 9929911340
+2026-09-04T08:49:20.9165765Z Artifact download URL: https://github.com/JubayerONROB/orderguard-alpaca/actions/runs/33855220353/artifacts/9929911340
+﻿2026-09-04T08:49:20.9296908Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-04T08:49:20.9297798Z Post job cleanup.
+2026-09-04T08:49:21.0071865Z (node:2144) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-09-04T08:49:21.0072372Z (Use `node --trace-deprecation ...` to show where the warning was created)
+﻿2026-09-04T08:49:21.0220724Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-04T08:49:21.0221745Z Post job cleanup.
+2026-09-04T08:49:21.0773587Z [command]/usr/bin/git version
+2026-09-04T08:49:21.0808091Z git version 2.55.0
+2026-09-04T08:49:21.0833945Z Temporarily overriding HOME='/home/runner/work/_temp/7b0657f0-5166-4444-bbc8-5d65d51f8824' before making global git config changes
+2026-09-04T08:49:21.0834668Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-04T08:49:21.0836891Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/orderguard-alpaca/orderguard-alpaca

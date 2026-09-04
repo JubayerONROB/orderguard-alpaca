@@ -1,0 +1,37 @@
+=== Step 1: real Alpaca paper account ===
+account_id=ab961bec-da23-40c7-aa85-7e97c8a6f0d5 equity=$100020.45 cash=$99365.79
+
+=== Step 2: research pipeline (live) ===
+  regime: SPY NEUTRAL LOWvol ABOVE_AVERAGEvolume
+  regime: QQQ NEUTRAL LOWvol AVERAGEvolume
+  regime: AAPL BULLISH LOWvol AVERAGEvolume
+  regime: MSFT BULLISH NORMALvol ABOVE_AVERAGEvolume
+  regime: NVDA BULLISH HIGHvol AVERAGEvolume
+  regime: AMD BEARISH HIGHvol BELOW_AVERAGEvolume
+  regime: AMZN BEARISH NORMALvol BELOW_AVERAGEvolume
+  hypothesis: "MSFT Bullish Momentum Pullback" -- MSFT is in a BULLISH regime with NORMAL volatility and ABOVE_AVERAGE volume, suggesting sustained buying pressure without extreme swings. A momentum entry capturing the bullish continuation fits this regime better than a breakout (no high-volume surge) or MA crossover (slower). A fixed hold period suits the low-to-normal volatility environment where large drawdowns are less likely.
+  backtest OOS: return=16.3% sharpe=1.74 trades=6
+  adversary verdict: PASS (overall score 60/100)
+  lifecycle state: WATCH
+
+=== Step 3: compile the resulting instruction (live) ===
+  market closed (next open 2026-09-04 09:30:00-04:00) -- using a real quote: MSFT last=$510.15
+  instruction: Buy 9 shares of MSFT as a limit order at $512.70 per share, extended-hours eligible, based on the "MSFT Bullish Momentum Pullback" strategy (momentum_threshold entry, fixed_hold_days exit).
+
+=== Step 4: deterministic rule engine (R1-R7) ===
+
+=== Step 5: full RiskReport ===
+
+Final basket:
+  buy MSFT 9 sh
+
+==============================================================================
+APPROVAL IS BEING SCRIPTED FOR THIS CI DEMONSTRATION.
+THIS IS NOT A SUBSTITUTE FOR THE UI'S HUMAN-IN-THE-LOOP APPROVAL STEP.
+==============================================================================
+
+=== Step 7: submitting to Alpaca paper ===
+  submitted buy MSFT -> order ae7ab3ce-6700-44d6-a5f1-e05e1792f355
+
+=== Step 8: logging fill(s) to performance monitor ===
+  logged to /home/runner/work/orderguard-alpaca/orderguard-alpaca/eval/runs/strategy_log.jsonl

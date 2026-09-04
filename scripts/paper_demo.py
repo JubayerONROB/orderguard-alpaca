@@ -66,14 +66,14 @@ TRAJECTORY_PATH = Path(__file__).resolve().parent.parent / "eval" / "runs" / "tr
 REPORT_PATH = Path(__file__).resolve().parent.parent / "eval" / "runs" / "paper_demo_report.txt"
 
 
-def _print_risk_report(report: RiskReport) -> None:
-    print(f"\nDecision: {report.decision.value.upper()}")
+def _print_risk_report(report: RiskReport, out) -> None:
+    out(f"\nDecision: {report.decision.value.upper()}")
     if report.rules_fired:
-        print("Rule findings:")
+        out("Rule findings:")
         for f in report.rules_fired:
-            print(f"  [{f.disposition.value}] {f.rule_id}: {f.explanation}")
+            out(f"  [{f.disposition.value}] {f.rule_id}: {f.explanation}")
     else:
-        print("Rule findings: none -- every rule passed on the original basket.")
+        out("Rule findings: none -- every rule passed on the original basket.")
 
 
 def main() -> None:
@@ -206,7 +206,7 @@ def _run(out) -> None:
     final_plan, report = RuleEngine().evaluate(naive_plan, account, market, constraints)
 
     out("\n=== Step 5: full RiskReport ===")
-    _print_risk_report(report)
+    _print_risk_report(report, out)
     out("\nFinal basket:")
     for o in final_plan.orders:
         size = f"{o.qty} sh" if o.qty is not None else f"${o.notional}"
