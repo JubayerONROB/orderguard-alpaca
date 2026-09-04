@@ -14,6 +14,7 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Protocol
 
+from alpaca.data.enums import DataFeed
 from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame
@@ -63,10 +64,18 @@ class InsufficientBarsError(Exception):
 def fetch_daily_bars(
     data_client: StockHistoricalDataClient, symbol: str, lookback_days: int = LOOKBACK_DAYS
 ) -> list[Bar]:
-    """Fetches up to `lookback_days` of daily bars for `symbol`, oldest first."""
+    """Fetches up to `lookback_days` of daily bars for `symbol`, oldest first.
+
+    Explicitly requests the IEX feed: a standard (non-subscription) Alpaca account's
+    market data plan does not permit querying recent SIP data -- the alpaca-py default
+    -- and raises a 403 `APIError` for exactly the "up to now" range this always asks
+    for. IEX is the feed every paper account actually has access to.
+    """
     end = datetime.now(timezone.utc)
     start = end - timedelta(days=int(lookback_days * 1.6))  # calendar days, to cover weekends/holidays
-    request = StockBarsRequest(symbol_or_symbols=[symbol], timeframe=TimeFrame.Day, start=start, end=end)
+    request = StockBarsRequest(
+        symbol_or_symbols=[symbol], timeframe=TimeFrame.Day, start=start, end=end, feed=DataFeed.IEX
+    )
     bar_set = data_client.get_stock_bars(request)
     bars = list(bar_set[symbol])
     return bars[-lookback_days:] if len(bars) > lookback_days else bars
