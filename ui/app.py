@@ -283,6 +283,44 @@ def _pct(value: Decimal, of: Decimal) -> str:
     return f"{(value / of * 100):.1f}%"
 
 
+SUCCESSFUL_RUN_URL = "https://github.com/JubayerONROB/orderguard-alpaca/actions/runs/33855220353"
+BLOCKED_RUN_URL = "https://github.com/JubayerONROB/orderguard-alpaca/actions/runs/33852216976"
+
+
+def _render_live_proof() -> None:
+    """Two real, live `paper-demo.yml` (Tier 3) runs against the real paper account and
+    real Agnes LLM -- not a demo dressed up to look real. Full console log, uploaded
+    report, and trajectory JSONL for both live under `docs/tier3-evidence/`; this just
+    surfaces the headline facts where anyone opening the app sees them immediately."""
+    with st.expander("Proof: two real Tier 3 runs (research pipeline -> real Alpaca paper order)", expanded=True):
+        st.caption(
+            "Same pipeline, same real account, same day. The only difference was whether the "
+            "compiled order was eligible to execute in the current session -- the deterministic "
+            "layer decides that, not the model that proposed the trade."
+        )
+        col1, col2 = st.columns(2)
+        with col1:
+            st.success("ALLOW -- order submitted and filled")
+            st.markdown(
+                '**"MSFT Bullish Momentum Pullback"** -- momentum entry, fixed-hold exit  \n'
+                "Backtest OOS: +16.3% return, Sharpe 1.74 -- Adversary: PASS (60/100) -- Lifecycle: WATCH  \n"
+                "Compiled: extended-hours limit order, 9 sh MSFT @ $512.70  \n"
+                "Submitted -> order `ae7ab3ce-6700-44d6-a5f1-e05e1792f355`  \n"
+                "**Filled** at $508.2684 avg (confirmed against the live account afterward)"
+            )
+            st.markdown(f"[View the full run log]({SUCCESSFUL_RUN_URL})")
+        with col2:
+            st.error("BLOCK -- nothing submitted")
+            st.markdown(
+                '**"MSFT Bullish Momentum Capture"** -- momentum entry, ATR stop  \n'
+                "Backtest OOS: +24.5% return, Sharpe 2.32 -- Adversary: PASS (71/100) -- Lifecycle: WATCH  \n"
+                "Compiled: plain market order (no extended-hours request), $5,001 of MSFT  \n"
+                "**R6_SESSION blocked it**: market closed, order not extended-hours eligible  \n"
+                "No order was submitted. No order exists from this run."
+            )
+            st.markdown(f"[View the full run log]({BLOCKED_RUN_URL})")
+
+
 def _render_account_panel(account: AccountState) -> None:
     st.subheader("Account")
     c1, c2, c3, c4, c5 = st.columns(5)
@@ -435,6 +473,8 @@ def _render_undeployed_cash(naive_plan: OrderPlan, final_plan: OrderPlan, market
 def main() -> None:
     st.title("OrderGuard")
     st.caption("Review a plain-English instruction before anything reaches your broker.")
+
+    _render_live_proof()
 
     with st.sidebar:
         st.header("Mode")
