@@ -15,12 +15,14 @@ from __future__ import annotations
 
 import sys
 from datetime import datetime, timezone
-from decimal import Decimal
+from decimal import ROUND_DOWN, Decimal
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from alpaca.data.enums import DataFeed
 from alpaca.data.historical import StockHistoricalDataClient
+from alpaca.data.requests import StockLatestTradeRequest
 
 from orderguard.audit.trajectory import TrajectoryLogger
 from orderguard.broker.alpaca_client import AlpacaClient
@@ -42,13 +44,23 @@ from orderguard.research.performance_monitor import (
 )
 from orderguard.research.strategy_discovery import StrategyDiscovery
 from orderguard.rules.engine import RuleEngine
-from orderguard.schemas.market_snapshot import AssetMeta, MarketClock, MarketSnapshot
+from orderguard.schemas.market_snapshot import (
+    AssetMeta,
+    MarketClock,
+    MarketSnapshot,
+    Quote,
+)
 from orderguard.schemas.risk_report import Decision, RiskReport
 from orderguard.schemas.user_constraints import UserConstraints
 
 RESEARCH_PROMPT = "Find a short-term strategy suited to the current regime."
 MAX_POSITION_PCT = Decimal(15)
 NOTIONAL_PCT_OF_EQUITY = Decimal(5)
+LIMIT_PRICE_BUFFER_PCT = Decimal("0.5")
+"""When the market is closed, the generated instruction asks for a limit order priced
+this many percent above the last trade (for a buy) -- aggressive enough to have a real
+chance of filling in Alpaca's extended-hours session, never a market order (which
+Alpaca rejects outright for extended-hours: 'must be DAY or GTC limit orders')."""
 
 TRAJECTORY_PATH = Path(__file__).resolve().parent.parent / "eval" / "runs" / "trajectories" / "paper_demo.jsonl"
 REPORT_PATH = Path(__file__).resolve().parent.parent / "eval" / "runs" / "paper_demo_report.txt"
@@ -125,11 +137,39 @@ def _run(out) -> None:
     out(f"  lifecycle state: {state.value.upper()}")
 
     out("\n=== Step 3: compile the resulting instruction (live) ===")
+    clock = broker._client.get_clock()
     suggested_notional = (account.equity * NOTIONAL_PCT_OF_EQUITY / 100).quantize(Decimal(1))
-    instruction = (
-        f'Buy approximately ${suggested_notional} of {symbol} based on the '
-        f'"{hypothesis.name}" strategy ({hypothesis.entry.kind} entry, {hypothesis.exit.kind} exit).'
-    )
+
+    quotes: tuple[Quote, ...] = ()
+    if clock.is_open:
+        instruction = (
+            f'Buy approximately ${suggested_notional} of {symbol} based on the '
+            f'"{hypothesis.name}" strategy ({hypothesis.entry.kind} entry, {hypothesis.exit.kind} exit).'
+        )
+    else:
+        # A plain market-buy instruction is worthless here: Alpaca rejects a market
+        # order flagged extended_hours outright, and the deterministic R6 (session)
+        # rule correctly BLOCKs a non-extended-hours order while the market is closed
+        # (see the two real runs this was built against). The only way to place a real
+        # order right now is an extended-hours-eligible LIMIT order, so the instruction
+        # says so explicitly and literally -- the compiler is never asked to invent a
+        # price, it's given a real one and told to compile exactly what it's told.
+        last_trade = data_client.get_stock_latest_trade(
+            StockLatestTradeRequest(symbol_or_symbols=[symbol], feed=DataFeed.IEX)
+        )[symbol]
+        last_price = Decimal(str(last_trade.price))
+        limit_price = (last_price * (1 + LIMIT_PRICE_BUFFER_PCT / 100)).quantize(Decimal("0.01"))
+        qty = (suggested_notional / limit_price).to_integral_value(rounding=ROUND_DOWN)
+        if qty < 1:
+            out(f"  {symbol} at ${limit_price}/share exceeds the ${suggested_notional} sizing target -- aborting.")
+            sys.exit(1)
+        quotes = (Quote(symbol=symbol, last_price=last_price, as_of=last_trade.timestamp),)
+        out(f"  market closed (next open {clock.next_open}) -- using a real quote: {symbol} last=${last_price}")
+        instruction = (
+            f"Buy {qty} shares of {symbol} as a limit order at ${limit_price} per share, extended-hours "
+            f'eligible, based on the "{hypothesis.name}" strategy ({hypothesis.entry.kind} entry, '
+            f"{hypothesis.exit.kind} exit)."
+        )
     out(f"  instruction: {instruction}")
 
     # Market eligibility data comes from the live Alpaca feed the same way ui/app.py's
@@ -151,10 +191,9 @@ def _run(out) -> None:
                 asset_class=str(asset.asset_class),
             )
         )
-    clock = broker._client.get_clock()
     market = MarketSnapshot(
         as_of=account.as_of,
-        quotes=(),
+        quotes=quotes,
         assets=tuple(assets),
         clock=MarketClock(timestamp=clock.timestamp, is_open=clock.is_open, next_open=clock.next_open, next_close=clock.next_close),
     )
