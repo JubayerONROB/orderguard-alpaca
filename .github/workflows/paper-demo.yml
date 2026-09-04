@@ -1,0 +1,92 @@
+name: Paper Trade Demo (REAL ORDER)
+
+# Tier 3: the "everything real" run (see scripts/paper_demo.py) -- research pipeline,
+# live LLM compiler call, deterministic rule engine, and (if the rule engine doesn't
+# BLOCK) an ACTUAL order submitted to the real Alpaca paper account.
+#
+# workflow_dispatch ONLY -- never runs on push/PR. The `confirm` input is a safety
+# interlock: it must be typed exactly as "RUN REAL PAPER TRADE" or the job fails before
+# any credential is even touched, so an accidental "Run workflow" click does nothing.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type exactly "RUN REAL PAPER TRADE" to confirm you want this run to place a real paper order.'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check confirmation phrase
+        env:
+          # Passed via env, never interpolated directly into the script -- an
+          # arbitrary workflow_dispatch text input should never be substituted
+          # straight into a shell command.
+          CONFIRM_INPUT: ${{ inputs.confirm }}
+        run: |
+          if [ "$CONFIRM_INPUT" != "RUN REAL PAPER TRADE" ]; then
+            echo "::error::confirm input did not exactly match \"RUN REAL PAPER TRADE\" -- aborting before touching any credential."
+            exit 1
+          fi
+          echo "Confirmation phrase matched. Proceeding to the real paper-demo job."
+
+  paper-demo:
+    needs: guard
+    runs-on: ubuntu-latest
+    env:
+      AGNES_API_KEY: ${{ secrets.AGNES_API_KEY }}
+      ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+      ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+      # Non-secret configuration -- see .env.example. Only the three keys above are secret.
+      AGNES_BASE_URL: https://apihub.agnes-ai.com/v1
+      AGNES_MODEL_FLASH: agnes-2.5-flash
+      AGNES_MODEL_PRO: agnes-2.5-pro
+      AGNES_MODEL_TURBO: agnes-2.5-turbo
+      AGNES_DEFAULT_MODEL: agnes-2.5-flash
+      AGNES_TIMEOUT: "30"
+      AGNES_MAX_RETRIES: "3"
+      ALPACA_ENVIRONMENT: paper
+      ALPACA_ENDPOINT: https://paper-api.alpaca.markets/v2
+      ALPACA_PAPER: "true"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install
+        run: pip install -e .
+
+      - name: Verify required secrets are present
+        run: |
+          missing=0
+          for name in AGNES_API_KEY ALPACA_API_KEY ALPACA_SECRET_KEY; do
+            value="${!name}"
+            if [ -z "$value" ]; then
+              echo "::error::Secret $name is missing or empty -- add it under Settings > Secrets and variables > Actions."
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Run the full research -> compile -> rules -> approve -> submit flow
+        run: python scripts/paper_demo.py
+
+      - name: Upload trajectory + RiskReport artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: paper-demo-run-${{ github.run_id }}
+          path: |
+            eval/runs/trajectories/paper_demo.jsonl
+            eval/runs/paper_demo_report.txt
+          if-no-files-found: warn
+          retention-days: 90

@@ -1,0 +1,58 @@
+name: Live Read-Only Check
+
+# Tier 2: proves the real Alpaca paper account and real Agnes credentials actually work,
+# without mutating any state (see scripts/live_readonly_check.py). Costs one real LLM
+# call and a couple of read-only Alpaca calls -- runs on push to master only, never on
+# every branch/PR.
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  live-check:
+    runs-on: ubuntu-latest
+    env:
+      AGNES_API_KEY: ${{ secrets.AGNES_API_KEY }}
+      ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+      ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+      # Non-secret configuration -- see .env.example. These identify which Agnes models
+      # to use and confirm this is a paper account; only the three keys above are secret.
+      AGNES_BASE_URL: https://apihub.agnes-ai.com/v1
+      AGNES_MODEL_FLASH: agnes-2.5-flash
+      AGNES_MODEL_PRO: agnes-2.5-pro
+      AGNES_MODEL_TURBO: agnes-2.5-turbo
+      AGNES_DEFAULT_MODEL: agnes-2.5-flash
+      AGNES_TIMEOUT: "30"
+      AGNES_MAX_RETRIES: "3"
+      ALPACA_ENVIRONMENT: paper
+      ALPACA_ENDPOINT: https://paper-api.alpaca.markets/v2
+      ALPACA_PAPER: "true"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install
+        run: pip install -e .
+
+      - name: Verify required secrets are present
+        run: |
+          missing=0
+          for name in AGNES_API_KEY ALPACA_API_KEY ALPACA_SECRET_KEY; do
+            value="${!name}"
+            if [ -z "$value" ]; then
+              echo "::error::Secret $name is missing or empty -- add it under Settings > Secrets and variables > Actions."
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Live read-only check (Alpaca account + one Agnes compiler call)
+        run: python scripts/live_readonly_check.py

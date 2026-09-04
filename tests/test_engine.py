@@ -22,22 +22,22 @@ CONSTRAINTS = UserConstraints(max_position_pct=Decimal(15))
 
 
 def _state(**overrides) -> AccountState:
-    defaults = dict(
-        account_id="acct_1",
-        as_of=NOW,
-        account_type="margin",
-        equity=Decimal("50000.00"),
-        cash=Decimal("50000.00"),
-        buying_power=Decimal("50000.00"),
-        pattern_day_trader=False,
-        daytrade_count=0,
-    )
+    defaults = {
+        "account_id": "acct_1",
+        "as_of": NOW,
+        "account_type": "margin",
+        "equity": Decimal("50000.00"),
+        "cash": Decimal("50000.00"),
+        "buying_power": Decimal("50000.00"),
+        "pattern_day_trader": False,
+        "daytrade_count": 0,
+    }
     defaults.update(overrides)
     return AccountState(**defaults)
 
 
 def _market(**overrides) -> MarketSnapshot:
-    defaults = dict(as_of=NOW, clock=MarketClock(timestamp=NOW, is_open=True, next_open=NOW, next_close=NOW))
+    defaults = {"as_of": NOW, "clock": MarketClock(timestamp=NOW, is_open=True, next_open=NOW, next_close=NOW)}
     defaults.update(overrides)
     return MarketSnapshot(**defaults)
 

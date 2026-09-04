@@ -1,0 +1,44 @@
+# Mirrors .gitignore, plus build-context-only exclusions the image never needs
+# (tests/, .git, docs/ images) even though some of those are tracked in git.
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+pat.txt
+agnes.json
+alpaca.json
+secrets/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+
+# Eval / logs
+eval/runs/
+logs/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Not needed inside the image
+.git/
+.github/
+tests/
+docs/screenshot.png
+docs/trajectories/
+*.md.bak
+Dockerfile
+.dockerignore

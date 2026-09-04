@@ -1,5 +1,7 @@
 # OrderGuard for Alpaca
 
+[![Tests](https://github.com/JubayerONROB/orderguard-alpaca/actions/workflows/test.yml/badge.svg)](https://github.com/JubayerONROB/orderguard-alpaca/actions/workflows/test.yml)
+
 ## What this is
 
 OrderGuard is a pre-trade intent compiler and deterministic risk gate for self-directed
@@ -159,6 +161,27 @@ ALPACA_PAPER=true          # second, independent confirmation the guard requires
 missing raises immediately, before anything reaches the network. There is no live-trading
 mode in this codebase; only paper.
 
+**Alternative: Docker.** A tagged release (`vX.Y.Z`) is published to GHCR by
+`.github/workflows/docker-publish.yml`; no local Python setup needed:
+
+```
+# Fixture-only mode -- no credentials, boots straight into Demo/Fixture with the sidebar
+# toggle to Alpaca Paper disabled:
+docker run -p 8501:8501 ghcr.io/jubayeronrob/orderguard-alpaca:latest
+
+# With real credentials, to unlock Alpaca Paper mode in the sidebar:
+docker run -p 8501:8501 \
+  -e AGNES_BASE_URL=... -e AGNES_API_KEY=... -e AGNES_MODEL_FLASH=... \
+  -e AGNES_MODEL_PRO=... -e AGNES_MODEL_TURBO=... -e AGNES_DEFAULT_MODEL=... \
+  -e AGNES_TIMEOUT=30 -e AGNES_MAX_RETRIES=3 \
+  -e ALPACA_ENVIRONMENT=paper -e ALPACA_ENDPOINT=https://paper-api.alpaca.markets/v2 \
+  -e ALPACA_API_KEY=... -e ALPACA_SECRET_KEY=... -e ALPACA_PAPER=true \
+  ghcr.io/jubayeronrob/orderguard-alpaca:latest
+```
+
+Then open http://localhost:8501. To build the image locally instead of pulling it:
+`docker build -t orderguard-alpaca .`
+
 ## Run
 
 **Fixture mode — no keys needed at all:**
@@ -220,6 +243,47 @@ compiler, so its tests run against `MockLLMClient` and its one committed cassett
 UI's default research prompt/watchlist) lets the "Research a strategy" section work in
 fixture/demo mode with no live API call.
 
+## Continuous Integration
+
+Three tiers, deliberately separated by cost and risk -- everything about R1-R7 stays
+provable with zero credentials; only an explicit, confirmed manual trigger ever places a
+real order.
+
+**Tier 1 -- Tests** (`.github/workflows/test.yml`). Every push and pull request, any
+branch. No secrets used, no network calls: `ruff check .`, `pytest -q`, then `agent`,
+`rules_only`, and `baseline` each run against both suites (`main`, `holdout`) in cassette
+replay mode. This isn't just "tests pass" -- each eval run's printed summary is grepped
+against the exact frozen baseline numbers (agent/rules_only 100.0%/100.0%/0.0% on both
+suites, baseline 66.7%/54.5%/0.0% on main and 50.0%/66.7%/0.0% on holdout) and the job
+fails if any of them drifts, so a change that silently degrades the compiler or rule
+engine's accuracy is caught here, not discovered later.
+
+**Tier 2 -- Live Read-Only Check** (`.github/workflows/live-check.yml`). Push to `master`
+only (not every branch/PR -- this one costs real API calls). Needs the `AGNES_API_KEY`,
+`ALPACA_API_KEY`, and `ALPACA_SECRET_KEY` repo secrets. Runs
+`scripts/live_readonly_check.py`, which fetches the real Alpaca paper account (positions,
+open orders, confirms the paper-trading guard) and makes exactly one real Agnes
+intent-compiler call -- nothing here mutates any state. A missing or invalid secret fails
+the job loudly rather than skipping silently.
+
+**Tier 3 -- Paper Trade Demo (REAL ORDER)** (`.github/workflows/paper-demo.yml`).
+`workflow_dispatch` only -- never runs on push or PR, only when a human clicks "Run
+workflow" and types a `confirm` input matching **exactly** `RUN REAL PAPER TRADE`
+(case-sensitive); any other value fails the job before touching a credential. If
+triggered, `scripts/paper_demo.py` runs the real research pipeline (live Agnes calls
+throughout), compiles the resulting instruction, runs it through the unchanged R1-R7 rule
+engine, prints the full `RiskReport`, then **if and only if the decision is not BLOCK**
+submits the final basket to the real Alpaca paper account and logs the fill. The workflow
+log prints, in capital letters, that approval is being scripted for this CI
+demonstration and is not a substitute for the UI's human-in-the-loop approval step. The
+full trajectory log and printed report are uploaded as workflow artifacts. **This tier
+places a real (paper) order when triggered -- it is not read-only, and nobody should
+click "Run workflow" on it expecting a dry run.**
+
+A fourth workflow, **Publish Docker image** (`.github/workflows/docker-publish.yml`),
+builds and pushes the image to GHCR on a `v*` tag push -- no application secrets, just
+the built-in `GITHUB_TOKEN`.
+
 ## Provenance
 
 This repository is a repackaging of
@@ -240,6 +304,9 @@ research pipeline built on top of it):
   adversary, lifecycle, portfolio manager, portfolio guard, and performance monitor (see
   "The research pipeline" above), each with its own test file
 - The "Research a strategy" section of `ui/app.py`, and the "Performance" expander
+- `Dockerfile` / `.dockerignore` and the four GitHub Actions workflows under
+  `.github/workflows/` (see "Continuous Integration" above), plus
+  `scripts/live_readonly_check.py` and `scripts/paper_demo.py`
 
 **What's carried over unmodified:** `src/orderguard/rules/`, `src/orderguard/compiler/`,
 `src/orderguard/llm/`, `src/orderguard/schemas/`, the eval harness, and the rest of

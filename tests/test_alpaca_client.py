@@ -23,77 +23,77 @@ NOW = datetime(2026, 8, 27, 14, 30, tzinfo=timezone.utc)
 def _settings(**overrides) -> SimpleNamespace:
     """A duck-typed stand-in for `Settings` -- only the attributes AlpacaClient
     actually reads, no real pydantic validation or .env involved."""
-    defaults = dict(
-        alpaca_api_key="test-key-not-real",
-        alpaca_secret_key="test-secret-not-real",
-        alpaca_environment="paper",
-        alpaca_endpoint="https://paper-api.alpaca.markets/v2",
-        alpaca_paper=True,
-    )
+    defaults = {
+        "alpaca_api_key": "test-key-not-real",
+        "alpaca_secret_key": "test-secret-not-real",
+        "alpaca_environment": "paper",
+        "alpaca_endpoint": "https://paper-api.alpaca.markets/v2",
+        "alpaca_paper": True,
+    }
     defaults.update(overrides)
     return SimpleNamespace(**defaults)
 
 
 def _mock_account(**overrides) -> SimpleNamespace:
-    defaults = dict(
-        id="ab96xxxx-xxxx-xxxx-xxxx-xxxxxxxxf0d5",
-        multiplier="4",
-        equity="100000",
-        cash="100000",
-        buying_power="400000",
-        pattern_day_trader=False,
-        daytrade_count=0,
-    )
+    defaults = {
+        "id": "ab96xxxx-xxxx-xxxx-xxxx-xxxxxxxxf0d5",
+        "multiplier": "4",
+        "equity": "100000",
+        "cash": "100000",
+        "buying_power": "400000",
+        "pattern_day_trader": False,
+        "daytrade_count": 0,
+    }
     defaults.update(overrides)
     return SimpleNamespace(**defaults)
 
 
 def _mock_position(**overrides) -> SimpleNamespace:
-    defaults = dict(
-        symbol="AAPL",
-        qty="31.26",
-        avg_entry_price="319.92",
-        current_price="319.92",
-        market_value="10000.00",
-        cost_basis="10000.00",
-        unrealized_pl="0.00",
-        asset_class="us_equity",
-    )
+    defaults = {
+        "symbol": "AAPL",
+        "qty": "31.26",
+        "avg_entry_price": "319.92",
+        "current_price": "319.92",
+        "market_value": "10000.00",
+        "cost_basis": "10000.00",
+        "unrealized_pl": "0.00",
+        "asset_class": "us_equity",
+    }
     defaults.update(overrides)
     return SimpleNamespace(**defaults)
 
 
 def _mock_open_order(**overrides) -> SimpleNamespace:
-    defaults = dict(
-        id="5cec26de-26fa-4d1c-a1d3-73d9ce982631",
-        symbol="AAPL",
-        side=SimpleNamespace(value="buy"),
-        qty="5",
-        notional=None,
-        order_type=SimpleNamespace(value="limit"),
-        limit_price="255.00",
-        stop_price=None,
-        status=SimpleNamespace(value="accepted"),
-        submitted_at=NOW,
-    )
+    defaults = {
+        "id": "5cec26de-26fa-4d1c-a1d3-73d9ce982631",
+        "symbol": "AAPL",
+        "side": SimpleNamespace(value="buy"),
+        "qty": "5",
+        "notional": None,
+        "order_type": SimpleNamespace(value="limit"),
+        "limit_price": "255.00",
+        "stop_price": None,
+        "status": SimpleNamespace(value="accepted"),
+        "submitted_at": NOW,
+    }
     defaults.update(overrides)
     return SimpleNamespace(**defaults)
 
 
 def _mock_closed_buy(**overrides) -> SimpleNamespace:
-    defaults = dict(filled_at=NOW)
+    defaults = {"filled_at": NOW}
     defaults.update(overrides)
     return SimpleNamespace(**defaults)
 
 
 def _mock_closed_sell(**overrides) -> SimpleNamespace:
-    defaults = dict(
-        id="sell-order-1",
-        symbol="TSM",
-        filled_qty="10",
-        filled_avg_price="200.00",
-        filled_at=NOW,
-    )
+    defaults = {
+        "id": "sell-order-1",
+        "symbol": "TSM",
+        "filled_qty": "10",
+        "filled_avg_price": "200.00",
+        "filled_at": NOW,
+    }
     defaults.update(overrides)
     return SimpleNamespace(**defaults)
 

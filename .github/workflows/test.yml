@@ -1,0 +1,83 @@
+name: Tests
+
+# Tier 1: unit tests + lint + eval-number regression gate. Runs entirely from committed
+# cassettes/fixtures -- zero network calls, zero secrets, zero cost. Every push and PR.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      # Forces replay mode everywhere so this job can never accidentally reach a real
+      # LLM even if some future code path forgets to pass --llm-mode explicitly.
+      ORDERGUARD_LLM_MODE: replay
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install
+        run: pip install -e ".[dev]"
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Unit tests
+        run: pytest -q
+
+      - name: "Eval regression gate: agent / main suite (expect 100.0% / 100.0% / 0.0%)"
+        run: |
+          OUTPUT=$(python -m eval.run_eval --system agent --llm-mode replay --suite main)
+          echo "$OUTPUT"
+          echo "$OUTPUT" | grep -qF "primary_score     = 100.0%" || { echo "REGRESSION: agent/main primary_score is no longer 100.0%"; exit 1; }
+          echo "$OUTPUT" | grep -qF "catch_rate        = 100.0%" || { echo "REGRESSION: agent/main catch_rate is no longer 100.0%"; exit 1; }
+          echo "$OUTPUT" | grep -qF "false_block_rate  = 0.0%" || { echo "REGRESSION: agent/main false_block_rate is no longer 0.0%"; exit 1; }
+
+      - name: "Eval regression gate: agent / holdout suite (expect 100.0% / 100.0% / 0.0%)"
+        run: |
+          OUTPUT=$(python -m eval.run_eval --system agent --llm-mode replay --suite holdout)
+          echo "$OUTPUT"
+          echo "$OUTPUT" | grep -qF "primary_score     = 100.0%" || { echo "REGRESSION: agent/holdout primary_score is no longer 100.0%"; exit 1; }
+          echo "$OUTPUT" | grep -qF "catch_rate        = 100.0%" || { echo "REGRESSION: agent/holdout catch_rate is no longer 100.0%"; exit 1; }
+          echo "$OUTPUT" | grep -qF "false_block_rate  = 0.0%" || { echo "REGRESSION: agent/holdout false_block_rate is no longer 0.0%"; exit 1; }
+
+      - name: "Eval regression gate: rules_only / main suite (expect 100.0% / 100.0% / 0.0%)"
+        run: |
+          OUTPUT=$(python -m eval.run_eval --system rules_only --suite main)
+          echo "$OUTPUT"
+          echo "$OUTPUT" | grep -qF "primary_score     = 100.0%" || { echo "REGRESSION: rules_only/main primary_score is no longer 100.0%"; exit 1; }
+          echo "$OUTPUT" | grep -qF "catch_rate        = 100.0%" || { echo "REGRESSION: rules_only/main catch_rate is no longer 100.0%"; exit 1; }
+          echo "$OUTPUT" | grep -qF "false_block_rate  = 0.0%" || { echo "REGRESSION: rules_only/main false_block_rate is no longer 0.0%"; exit 1; }
+
+      - name: "Eval regression gate: rules_only / holdout suite (expect 100.0% / 100.0% / 0.0%)"
+        run: |
+          OUTPUT=$(python -m eval.run_eval --system rules_only --suite holdout)
+          echo "$OUTPUT"
+          echo "$OUTPUT" | grep -qF "primary_score     = 100.0%" || { echo "REGRESSION: rules_only/holdout primary_score is no longer 100.0%"; exit 1; }
+          echo "$OUTPUT" | grep -qF "catch_rate        = 100.0%" || { echo "REGRESSION: rules_only/holdout catch_rate is no longer 100.0%"; exit 1; }
+          echo "$OUTPUT" | grep -qF "false_block_rate  = 0.0%" || { echo "REGRESSION: rules_only/holdout false_block_rate is no longer 0.0%"; exit 1; }
+
+      - name: "Eval regression gate: baseline / main suite (expect 66.7% / 54.5% / 0.0%)"
+        run: |
+          OUTPUT=$(python -m eval.run_eval --system baseline --llm-mode replay --suite main)
+          echo "$OUTPUT"
+          echo "$OUTPUT" | grep -qF "primary_score     = 66.7%" || { echo "REGRESSION: baseline/main primary_score is no longer 66.7%"; exit 1; }
+          echo "$OUTPUT" | grep -qF "catch_rate        = 54.5%" || { echo "REGRESSION: baseline/main catch_rate is no longer 54.5%"; exit 1; }
+          echo "$OUTPUT" | grep -qF "false_block_rate  = 0.0%" || { echo "REGRESSION: baseline/main false_block_rate is no longer 0.0%"; exit 1; }
+
+      - name: "Eval regression gate: baseline / holdout suite (expect 50.0% / 66.7% / 0.0%)"
+        run: |
+          OUTPUT=$(python -m eval.run_eval --system baseline --llm-mode replay --suite holdout)
+          echo "$OUTPUT"
+          echo "$OUTPUT" | grep -qF "primary_score     = 50.0%" || { echo "REGRESSION: baseline/holdout primary_score is no longer 50.0%"; exit 1; }
+          echo "$OUTPUT" | grep -qF "catch_rate        = 66.7%" || { echo "REGRESSION: baseline/holdout catch_rate is no longer 66.7%"; exit 1; }
+          echo "$OUTPUT" | grep -qF "false_block_rate  = 0.0%" || { echo "REGRESSION: baseline/holdout false_block_rate is no longer 0.0%"; exit 1; }
